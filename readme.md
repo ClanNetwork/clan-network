@@ -1,5 +1,5 @@
-# clannetwork
-**clannetwork** is a blockchain built using Cosmos SDK and Tendermint and created with [Starport](https://starport.com).
+# Clan Network
+**Clan Network** is a blockchain built using Cosmos SDK and Tendermint and created with [Starport](https://starport.com).
 
 ## Get started
 
@@ -50,3 +50,8 @@ curl https://get.starport.com/ClanNetwork/clan-network@latest! | sudo bash
 - [Starport docs](https://docs.starport.com)
 - [Cosmos SDK docs](https://docs.cosmos.network)
 - [Developer Chat](https://discord.gg/H6wGTY8sxw)
+
+
+## Credit
+
+https://github.com/public-awesome/stargaze for the claim module

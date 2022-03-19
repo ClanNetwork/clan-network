@@ -1,13 +1,10 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
-// @ts-ignore
-import { SpVuexError } from '@starport/vuex'
 
-import { FungibleTokenPacketData } from "./module/types/ibc/applications/transfer/v1/transfer"
 import { DenomTrace } from "./module/types/ibc/applications/transfer/v1/transfer"
 import { Params } from "./module/types/ibc/applications/transfer/v1/transfer"
 
 
-export { FungibleTokenPacketData, DenomTrace, Params };
+export { DenomTrace, Params };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -50,7 +47,6 @@ const getDefaultState = () => {
 				Params: {},
 				
 				_Structure: {
-						FungibleTokenPacketData: getStructure(FungibleTokenPacketData.fromPartial({})),
 						DenomTrace: getStructure(DenomTrace.fromPartial({})),
 						Params: getStructure(Params.fromPartial({})),
 						
@@ -128,7 +124,7 @@ export default {
 					const sub=JSON.parse(subscription)
 					await dispatch(sub.action, sub.payload)
 				}catch(e) {
-					throw new SpVuexError('Subscriptions: ' + e.message)
+					throw new Error('Subscriptions: ' + e.message)
 				}
 			})
 		},
@@ -149,7 +145,7 @@ export default {
 				if (subscribe) commit('SUBSCRIBE', { action: 'QueryDenomTrace', payload: { options: { all }, params: {...key},query }})
 				return getters['getDenomTrace']( { params: {...key}, query}) ?? {}
 			} catch (e) {
-				throw new SpVuexError('QueryClient:QueryDenomTrace', 'API Node Unavailable. Could not perform query: ' + e.message)
+				throw new Error('QueryClient:QueryDenomTrace API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
@@ -175,7 +171,7 @@ export default {
 				if (subscribe) commit('SUBSCRIBE', { action: 'QueryDenomTraces', payload: { options: { all }, params: {...key},query }})
 				return getters['getDenomTraces']( { params: {...key}, query}) ?? {}
 			} catch (e) {
-				throw new SpVuexError('QueryClient:QueryDenomTraces', 'API Node Unavailable. Could not perform query: ' + e.message)
+				throw new Error('QueryClient:QueryDenomTraces API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
@@ -197,7 +193,7 @@ export default {
 				if (subscribe) commit('SUBSCRIBE', { action: 'QueryParams', payload: { options: { all }, params: {...key},query }})
 				return getters['getParams']( { params: {...key}, query}) ?? {}
 			} catch (e) {
-				throw new SpVuexError('QueryClient:QueryParams', 'API Node Unavailable. Could not perform query: ' + e.message)
+				throw new Error('QueryClient:QueryParams API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
@@ -212,9 +208,9 @@ export default {
 				return result
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgTransfer:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgTransfer:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgTransfer:Send', 'Could not broadcast Tx: '+ e.message)
+					throw new Error('TxClient:MsgTransfer:Send Could not broadcast Tx: '+ e.message)
 				}
 			}
 		},
@@ -226,10 +222,9 @@ export default {
 				return msg
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgTransfer:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgTransfer:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgTransfer:Create', 'Could not create message: ' + e.message)
-					
+					throw new Error('TxClient:MsgTransfer:Create Could not create message: ' + e.message)
 				}
 			}
 		},

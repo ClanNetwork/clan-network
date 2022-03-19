@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ClanNetwork/clan-network/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -17,8 +18,6 @@ import (
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	tmdb "github.com/tendermint/tm-db"
-
-	"github.com/ClanNetwork/clan-network/app"
 )
 
 type (
