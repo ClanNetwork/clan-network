@@ -35,7 +35,7 @@ export interface QueryClaimRecordRequest {
 }
 
 export interface QueryClaimRecordResponse {
-  claim_record: ClaimRecord | undefined;
+  claimRecord: ClaimRecord | undefined;
 }
 
 export interface QueryClaimableForActionRequest {
@@ -371,9 +371,9 @@ export const QueryClaimRecordResponse = {
     message: QueryClaimRecordResponse,
     writer: Writer = Writer.create()
   ): Writer {
-    if (message.claim_record !== undefined) {
+    if (message.claimRecord !== undefined) {
       ClaimRecord.encode(
-        message.claim_record,
+        message.claimRecord,
         writer.uint32(10).fork()
       ).ldelim();
     }
@@ -393,7 +393,7 @@ export const QueryClaimRecordResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.claim_record = ClaimRecord.decode(reader, reader.uint32());
+          message.claimRecord = ClaimRecord.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -407,19 +407,19 @@ export const QueryClaimRecordResponse = {
     const message = {
       ...baseQueryClaimRecordResponse,
     } as QueryClaimRecordResponse;
-    if (object.claim_record !== undefined && object.claim_record !== null) {
-      message.claim_record = ClaimRecord.fromJSON(object.claim_record);
+    if (object.claimRecord !== undefined && object.claimRecord !== null) {
+      message.claimRecord = ClaimRecord.fromJSON(object.claimRecord);
     } else {
-      message.claim_record = undefined;
+      message.claimRecord = undefined;
     }
     return message;
   },
 
   toJSON(message: QueryClaimRecordResponse): unknown {
     const obj: any = {};
-    message.claim_record !== undefined &&
-      (obj.claim_record = message.claim_record
-        ? ClaimRecord.toJSON(message.claim_record)
+    message.claimRecord !== undefined &&
+      (obj.claimRecord = message.claimRecord
+        ? ClaimRecord.toJSON(message.claimRecord)
         : undefined);
     return obj;
   },
@@ -430,10 +430,10 @@ export const QueryClaimRecordResponse = {
     const message = {
       ...baseQueryClaimRecordResponse,
     } as QueryClaimRecordResponse;
-    if (object.claim_record !== undefined && object.claim_record !== null) {
-      message.claim_record = ClaimRecord.fromPartial(object.claim_record);
+    if (object.claimRecord !== undefined && object.claimRecord !== null) {
+      message.claimRecord = ClaimRecord.fromPartial(object.claimRecord);
     } else {
-      message.claim_record = undefined;
+      message.claimRecord = undefined;
     }
     return message;
   },

@@ -30,14 +30,14 @@ export enum V1Beta1Action {
 
 export interface V1Beta1ClaimEthRecord {
   address?: string;
-  initial_claimable_amount?: V1Beta1Coin[];
+  initialClaimableAmount?: V1Beta1Coin[];
   completed?: boolean;
 }
 
 export interface V1Beta1ClaimRecord {
   address?: string;
-  initial_claimable_amount?: V1Beta1Coin[];
-  action_completed?: boolean[];
+  initialClaimableAmount?: V1Beta1Coin[];
+  actionCompleted?: boolean[];
 }
 
 /**
@@ -52,24 +52,24 @@ export interface V1Beta1Coin {
 }
 
 export interface V1Beta1MsgClaimFroEthAddressResponse {
-  claimed_amount?: V1Beta1Coin[];
+  claimedAmount?: V1Beta1Coin[];
 }
 
 export interface V1Beta1MsgInitialClaimResponse {
-  claimed_amount?: V1Beta1Coin[];
+  claimedAmount?: V1Beta1Coin[];
 }
 
 /**
  * Params defines the claim module's parameters.
  */
 export interface V1Beta1Params {
-  airdrop_enabled?: boolean;
+  airdropEnabled?: boolean;
 
   /** @format date-time */
-  airdrop_start_time?: string;
-  duration_until_decay?: string;
-  duration_of_decay?: string;
-  claim_denom?: string;
+  airdropStartTime?: string;
+  durationUntilDecay?: string;
+  durationOfDecay?: string;
+  claimDenom?: string;
 }
 
 export interface V1Beta1QueryClaimEthRecordResponse {
@@ -77,7 +77,7 @@ export interface V1Beta1QueryClaimEthRecordResponse {
 }
 
 export interface V1Beta1QueryClaimRecordResponse {
-  claim_record?: V1Beta1ClaimRecord;
+  claimRecord?: V1Beta1ClaimRecord;
 }
 
 export interface V1Beta1QueryClaimableForActionResponse {

@@ -9,7 +9,7 @@ export interface MsgInitialClaim {
 }
 
 export interface MsgInitialClaimResponse {
-  claimed_amount: Coin[];
+  claimedAmount: Coin[];
 }
 
 export interface MsgClaimFroEthAddress {
@@ -19,7 +19,7 @@ export interface MsgClaimFroEthAddress {
 }
 
 export interface MsgClaimFroEthAddressResponse {
-  claimed_amount: Coin[];
+  claimedAmount: Coin[];
 }
 
 const baseMsgInitialClaim: object = { creator: "" };
@@ -84,7 +84,7 @@ export const MsgInitialClaimResponse = {
     message: MsgInitialClaimResponse,
     writer: Writer = Writer.create()
   ): Writer {
-    for (const v of message.claimed_amount) {
+    for (const v of message.claimedAmount) {
       Coin.encode(v!, writer.uint32(10).fork()).ldelim();
     }
     return writer;
@@ -96,12 +96,12 @@ export const MsgInitialClaimResponse = {
     const message = {
       ...baseMsgInitialClaimResponse,
     } as MsgInitialClaimResponse;
-    message.claimed_amount = [];
+    message.claimedAmount = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.claimed_amount.push(Coin.decode(reader, reader.uint32()));
+          message.claimedAmount.push(Coin.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -115,10 +115,10 @@ export const MsgInitialClaimResponse = {
     const message = {
       ...baseMsgInitialClaimResponse,
     } as MsgInitialClaimResponse;
-    message.claimed_amount = [];
-    if (object.claimed_amount !== undefined && object.claimed_amount !== null) {
-      for (const e of object.claimed_amount) {
-        message.claimed_amount.push(Coin.fromJSON(e));
+    message.claimedAmount = [];
+    if (object.claimedAmount !== undefined && object.claimedAmount !== null) {
+      for (const e of object.claimedAmount) {
+        message.claimedAmount.push(Coin.fromJSON(e));
       }
     }
     return message;
@@ -126,12 +126,12 @@ export const MsgInitialClaimResponse = {
 
   toJSON(message: MsgInitialClaimResponse): unknown {
     const obj: any = {};
-    if (message.claimed_amount) {
-      obj.claimed_amount = message.claimed_amount.map((e) =>
+    if (message.claimedAmount) {
+      obj.claimedAmount = message.claimedAmount.map((e) =>
         e ? Coin.toJSON(e) : undefined
       );
     } else {
-      obj.claimed_amount = [];
+      obj.claimedAmount = [];
     }
     return obj;
   },
@@ -142,10 +142,10 @@ export const MsgInitialClaimResponse = {
     const message = {
       ...baseMsgInitialClaimResponse,
     } as MsgInitialClaimResponse;
-    message.claimed_amount = [];
-    if (object.claimed_amount !== undefined && object.claimed_amount !== null) {
-      for (const e of object.claimed_amount) {
-        message.claimed_amount.push(Coin.fromPartial(e));
+    message.claimedAmount = [];
+    if (object.claimedAmount !== undefined && object.claimedAmount !== null) {
+      for (const e of object.claimedAmount) {
+        message.claimedAmount.push(Coin.fromPartial(e));
       }
     }
     return message;
@@ -257,7 +257,7 @@ export const MsgClaimFroEthAddressResponse = {
     message: MsgClaimFroEthAddressResponse,
     writer: Writer = Writer.create()
   ): Writer {
-    for (const v of message.claimed_amount) {
+    for (const v of message.claimedAmount) {
       Coin.encode(v!, writer.uint32(10).fork()).ldelim();
     }
     return writer;
@@ -272,12 +272,12 @@ export const MsgClaimFroEthAddressResponse = {
     const message = {
       ...baseMsgClaimFroEthAddressResponse,
     } as MsgClaimFroEthAddressResponse;
-    message.claimed_amount = [];
+    message.claimedAmount = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.claimed_amount.push(Coin.decode(reader, reader.uint32()));
+          message.claimedAmount.push(Coin.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -291,10 +291,10 @@ export const MsgClaimFroEthAddressResponse = {
     const message = {
       ...baseMsgClaimFroEthAddressResponse,
     } as MsgClaimFroEthAddressResponse;
-    message.claimed_amount = [];
-    if (object.claimed_amount !== undefined && object.claimed_amount !== null) {
-      for (const e of object.claimed_amount) {
-        message.claimed_amount.push(Coin.fromJSON(e));
+    message.claimedAmount = [];
+    if (object.claimedAmount !== undefined && object.claimedAmount !== null) {
+      for (const e of object.claimedAmount) {
+        message.claimedAmount.push(Coin.fromJSON(e));
       }
     }
     return message;
@@ -302,12 +302,12 @@ export const MsgClaimFroEthAddressResponse = {
 
   toJSON(message: MsgClaimFroEthAddressResponse): unknown {
     const obj: any = {};
-    if (message.claimed_amount) {
-      obj.claimed_amount = message.claimed_amount.map((e) =>
+    if (message.claimedAmount) {
+      obj.claimedAmount = message.claimedAmount.map((e) =>
         e ? Coin.toJSON(e) : undefined
       );
     } else {
-      obj.claimed_amount = [];
+      obj.claimedAmount = [];
     }
     return obj;
   },
@@ -318,10 +318,10 @@ export const MsgClaimFroEthAddressResponse = {
     const message = {
       ...baseMsgClaimFroEthAddressResponse,
     } as MsgClaimFroEthAddressResponse;
-    message.claimed_amount = [];
-    if (object.claimed_amount !== undefined && object.claimed_amount !== null) {
-      for (const e of object.claimed_amount) {
-        message.claimed_amount.push(Coin.fromPartial(e));
+    message.claimedAmount = [];
+    if (object.claimedAmount !== undefined && object.claimedAmount !== null) {
+      for (const e of object.claimedAmount) {
+        message.claimedAmount.push(Coin.fromPartial(e));
       }
     }
     return message;

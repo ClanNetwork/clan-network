@@ -7,41 +7,41 @@ export const protobufPackage = "ClanNetwork.clannetwork.claim.v1beta1";
 
 /** Params defines the claim module's parameters. */
 export interface Params {
-  airdrop_enabled: boolean;
-  airdrop_start_time: Date | undefined;
-  duration_until_decay: Duration | undefined;
-  duration_of_decay: Duration | undefined;
+  airdropEnabled: boolean;
+  airdropStartTime: Date | undefined;
+  durationUntilDecay: Duration | undefined;
+  durationOfDecay: Duration | undefined;
   /** denom of claimable asset */
-  claim_denom: string;
+  claimDenom: string;
 }
 
-const baseParams: object = { airdrop_enabled: false, claim_denom: "" };
+const baseParams: object = { airdropEnabled: false, claimDenom: "" };
 
 export const Params = {
   encode(message: Params, writer: Writer = Writer.create()): Writer {
-    if (message.airdrop_enabled === true) {
-      writer.uint32(8).bool(message.airdrop_enabled);
+    if (message.airdropEnabled === true) {
+      writer.uint32(8).bool(message.airdropEnabled);
     }
-    if (message.airdrop_start_time !== undefined) {
+    if (message.airdropStartTime !== undefined) {
       Timestamp.encode(
-        toTimestamp(message.airdrop_start_time),
+        toTimestamp(message.airdropStartTime),
         writer.uint32(18).fork()
       ).ldelim();
     }
-    if (message.duration_until_decay !== undefined) {
+    if (message.durationUntilDecay !== undefined) {
       Duration.encode(
-        message.duration_until_decay,
+        message.durationUntilDecay,
         writer.uint32(26).fork()
       ).ldelim();
     }
-    if (message.duration_of_decay !== undefined) {
+    if (message.durationOfDecay !== undefined) {
       Duration.encode(
-        message.duration_of_decay,
+        message.durationOfDecay,
         writer.uint32(34).fork()
       ).ldelim();
     }
-    if (message.claim_denom !== "") {
-      writer.uint32(42).string(message.claim_denom);
+    if (message.claimDenom !== "") {
+      writer.uint32(42).string(message.claimDenom);
     }
     return writer;
   },
@@ -54,24 +54,21 @@ export const Params = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.airdrop_enabled = reader.bool();
+          message.airdropEnabled = reader.bool();
           break;
         case 2:
-          message.airdrop_start_time = fromTimestamp(
+          message.airdropStartTime = fromTimestamp(
             Timestamp.decode(reader, reader.uint32())
           );
           break;
         case 3:
-          message.duration_until_decay = Duration.decode(
-            reader,
-            reader.uint32()
-          );
+          message.durationUntilDecay = Duration.decode(reader, reader.uint32());
           break;
         case 4:
-          message.duration_of_decay = Duration.decode(reader, reader.uint32());
+          message.durationOfDecay = Duration.decode(reader, reader.uint32());
           break;
         case 5:
-          message.claim_denom = reader.string();
+          message.claimDenom = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -83,112 +80,101 @@ export const Params = {
 
   fromJSON(object: any): Params {
     const message = { ...baseParams } as Params;
-    if (
-      object.airdrop_enabled !== undefined &&
-      object.airdrop_enabled !== null
-    ) {
-      message.airdrop_enabled = Boolean(object.airdrop_enabled);
+    if (object.airdropEnabled !== undefined && object.airdropEnabled !== null) {
+      message.airdropEnabled = Boolean(object.airdropEnabled);
     } else {
-      message.airdrop_enabled = false;
+      message.airdropEnabled = false;
     }
     if (
-      object.airdrop_start_time !== undefined &&
-      object.airdrop_start_time !== null
+      object.airdropStartTime !== undefined &&
+      object.airdropStartTime !== null
     ) {
-      message.airdrop_start_time = fromJsonTimestamp(object.airdrop_start_time);
+      message.airdropStartTime = fromJsonTimestamp(object.airdropStartTime);
     } else {
-      message.airdrop_start_time = undefined;
+      message.airdropStartTime = undefined;
     }
     if (
-      object.duration_until_decay !== undefined &&
-      object.duration_until_decay !== null
+      object.durationUntilDecay !== undefined &&
+      object.durationUntilDecay !== null
     ) {
-      message.duration_until_decay = Duration.fromJSON(
-        object.duration_until_decay
-      );
+      message.durationUntilDecay = Duration.fromJSON(object.durationUntilDecay);
     } else {
-      message.duration_until_decay = undefined;
+      message.durationUntilDecay = undefined;
     }
     if (
-      object.duration_of_decay !== undefined &&
-      object.duration_of_decay !== null
+      object.durationOfDecay !== undefined &&
+      object.durationOfDecay !== null
     ) {
-      message.duration_of_decay = Duration.fromJSON(object.duration_of_decay);
+      message.durationOfDecay = Duration.fromJSON(object.durationOfDecay);
     } else {
-      message.duration_of_decay = undefined;
+      message.durationOfDecay = undefined;
     }
-    if (object.claim_denom !== undefined && object.claim_denom !== null) {
-      message.claim_denom = String(object.claim_denom);
+    if (object.claimDenom !== undefined && object.claimDenom !== null) {
+      message.claimDenom = String(object.claimDenom);
     } else {
-      message.claim_denom = "";
+      message.claimDenom = "";
     }
     return message;
   },
 
   toJSON(message: Params): unknown {
     const obj: any = {};
-    message.airdrop_enabled !== undefined &&
-      (obj.airdrop_enabled = message.airdrop_enabled);
-    message.airdrop_start_time !== undefined &&
-      (obj.airdrop_start_time =
-        message.airdrop_start_time !== undefined
-          ? message.airdrop_start_time.toISOString()
+    message.airdropEnabled !== undefined &&
+      (obj.airdropEnabled = message.airdropEnabled);
+    message.airdropStartTime !== undefined &&
+      (obj.airdropStartTime =
+        message.airdropStartTime !== undefined
+          ? message.airdropStartTime.toISOString()
           : null);
-    message.duration_until_decay !== undefined &&
-      (obj.duration_until_decay = message.duration_until_decay
-        ? Duration.toJSON(message.duration_until_decay)
+    message.durationUntilDecay !== undefined &&
+      (obj.durationUntilDecay = message.durationUntilDecay
+        ? Duration.toJSON(message.durationUntilDecay)
         : undefined);
-    message.duration_of_decay !== undefined &&
-      (obj.duration_of_decay = message.duration_of_decay
-        ? Duration.toJSON(message.duration_of_decay)
+    message.durationOfDecay !== undefined &&
+      (obj.durationOfDecay = message.durationOfDecay
+        ? Duration.toJSON(message.durationOfDecay)
         : undefined);
-    message.claim_denom !== undefined &&
-      (obj.claim_denom = message.claim_denom);
+    message.claimDenom !== undefined && (obj.claimDenom = message.claimDenom);
     return obj;
   },
 
   fromPartial(object: DeepPartial<Params>): Params {
     const message = { ...baseParams } as Params;
-    if (
-      object.airdrop_enabled !== undefined &&
-      object.airdrop_enabled !== null
-    ) {
-      message.airdrop_enabled = object.airdrop_enabled;
+    if (object.airdropEnabled !== undefined && object.airdropEnabled !== null) {
+      message.airdropEnabled = object.airdropEnabled;
     } else {
-      message.airdrop_enabled = false;
+      message.airdropEnabled = false;
     }
     if (
-      object.airdrop_start_time !== undefined &&
-      object.airdrop_start_time !== null
+      object.airdropStartTime !== undefined &&
+      object.airdropStartTime !== null
     ) {
-      message.airdrop_start_time = object.airdrop_start_time;
+      message.airdropStartTime = object.airdropStartTime;
     } else {
-      message.airdrop_start_time = undefined;
+      message.airdropStartTime = undefined;
     }
     if (
-      object.duration_until_decay !== undefined &&
-      object.duration_until_decay !== null
+      object.durationUntilDecay !== undefined &&
+      object.durationUntilDecay !== null
     ) {
-      message.duration_until_decay = Duration.fromPartial(
-        object.duration_until_decay
+      message.durationUntilDecay = Duration.fromPartial(
+        object.durationUntilDecay
       );
     } else {
-      message.duration_until_decay = undefined;
+      message.durationUntilDecay = undefined;
     }
     if (
-      object.duration_of_decay !== undefined &&
-      object.duration_of_decay !== null
+      object.durationOfDecay !== undefined &&
+      object.durationOfDecay !== null
     ) {
-      message.duration_of_decay = Duration.fromPartial(
-        object.duration_of_decay
-      );
+      message.durationOfDecay = Duration.fromPartial(object.durationOfDecay);
     } else {
-      message.duration_of_decay = undefined;
+      message.durationOfDecay = undefined;
     }
-    if (object.claim_denom !== undefined && object.claim_denom !== null) {
-      message.claim_denom = object.claim_denom;
+    if (object.claimDenom !== undefined && object.claimDenom !== null) {
+      message.claimDenom = object.claimDenom;
     } else {
-      message.claim_denom = "";
+      message.claimDenom = "";
     }
     return message;
   },
