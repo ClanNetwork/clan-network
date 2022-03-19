@@ -8,7 +8,7 @@ export const protobufPackage = "cosmos.authz.v1beta1";
 /** EventGrant is emitted on Msg/Grant */
 export interface EventGrant {
   /** Msg type URL for which an autorization is granted */
-  msgTypeUrl: string;
+  msg_type_url: string;
   /** Granter account address */
   granter: string;
   /** Grantee account address */
@@ -18,19 +18,19 @@ export interface EventGrant {
 /** EventRevoke is emitted on Msg/Revoke */
 export interface EventRevoke {
   /** Msg type URL for which an autorization is revoked */
-  msgTypeUrl: string;
+  msg_type_url: string;
   /** Granter account address */
   granter: string;
   /** Grantee account address */
   grantee: string;
 }
 
-const baseEventGrant: object = { msgTypeUrl: "", granter: "", grantee: "" };
+const baseEventGrant: object = { msg_type_url: "", granter: "", grantee: "" };
 
 export const EventGrant = {
   encode(message: EventGrant, writer: Writer = Writer.create()): Writer {
-    if (message.msgTypeUrl !== "") {
-      writer.uint32(18).string(message.msgTypeUrl);
+    if (message.msg_type_url !== "") {
+      writer.uint32(18).string(message.msg_type_url);
     }
     if (message.granter !== "") {
       writer.uint32(26).string(message.granter);
@@ -49,7 +49,7 @@ export const EventGrant = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 2:
-          message.msgTypeUrl = reader.string();
+          message.msg_type_url = reader.string();
           break;
         case 3:
           message.granter = reader.string();
@@ -67,10 +67,10 @@ export const EventGrant = {
 
   fromJSON(object: any): EventGrant {
     const message = { ...baseEventGrant } as EventGrant;
-    if (object.msgTypeUrl !== undefined && object.msgTypeUrl !== null) {
-      message.msgTypeUrl = String(object.msgTypeUrl);
+    if (object.msg_type_url !== undefined && object.msg_type_url !== null) {
+      message.msg_type_url = String(object.msg_type_url);
     } else {
-      message.msgTypeUrl = "";
+      message.msg_type_url = "";
     }
     if (object.granter !== undefined && object.granter !== null) {
       message.granter = String(object.granter);
@@ -87,7 +87,8 @@ export const EventGrant = {
 
   toJSON(message: EventGrant): unknown {
     const obj: any = {};
-    message.msgTypeUrl !== undefined && (obj.msgTypeUrl = message.msgTypeUrl);
+    message.msg_type_url !== undefined &&
+      (obj.msg_type_url = message.msg_type_url);
     message.granter !== undefined && (obj.granter = message.granter);
     message.grantee !== undefined && (obj.grantee = message.grantee);
     return obj;
@@ -95,10 +96,10 @@ export const EventGrant = {
 
   fromPartial(object: DeepPartial<EventGrant>): EventGrant {
     const message = { ...baseEventGrant } as EventGrant;
-    if (object.msgTypeUrl !== undefined && object.msgTypeUrl !== null) {
-      message.msgTypeUrl = object.msgTypeUrl;
+    if (object.msg_type_url !== undefined && object.msg_type_url !== null) {
+      message.msg_type_url = object.msg_type_url;
     } else {
-      message.msgTypeUrl = "";
+      message.msg_type_url = "";
     }
     if (object.granter !== undefined && object.granter !== null) {
       message.granter = object.granter;
@@ -114,12 +115,12 @@ export const EventGrant = {
   },
 };
 
-const baseEventRevoke: object = { msgTypeUrl: "", granter: "", grantee: "" };
+const baseEventRevoke: object = { msg_type_url: "", granter: "", grantee: "" };
 
 export const EventRevoke = {
   encode(message: EventRevoke, writer: Writer = Writer.create()): Writer {
-    if (message.msgTypeUrl !== "") {
-      writer.uint32(18).string(message.msgTypeUrl);
+    if (message.msg_type_url !== "") {
+      writer.uint32(18).string(message.msg_type_url);
     }
     if (message.granter !== "") {
       writer.uint32(26).string(message.granter);
@@ -138,7 +139,7 @@ export const EventRevoke = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 2:
-          message.msgTypeUrl = reader.string();
+          message.msg_type_url = reader.string();
           break;
         case 3:
           message.granter = reader.string();
@@ -156,10 +157,10 @@ export const EventRevoke = {
 
   fromJSON(object: any): EventRevoke {
     const message = { ...baseEventRevoke } as EventRevoke;
-    if (object.msgTypeUrl !== undefined && object.msgTypeUrl !== null) {
-      message.msgTypeUrl = String(object.msgTypeUrl);
+    if (object.msg_type_url !== undefined && object.msg_type_url !== null) {
+      message.msg_type_url = String(object.msg_type_url);
     } else {
-      message.msgTypeUrl = "";
+      message.msg_type_url = "";
     }
     if (object.granter !== undefined && object.granter !== null) {
       message.granter = String(object.granter);
@@ -176,7 +177,8 @@ export const EventRevoke = {
 
   toJSON(message: EventRevoke): unknown {
     const obj: any = {};
-    message.msgTypeUrl !== undefined && (obj.msgTypeUrl = message.msgTypeUrl);
+    message.msg_type_url !== undefined &&
+      (obj.msg_type_url = message.msg_type_url);
     message.granter !== undefined && (obj.granter = message.granter);
     message.grantee !== undefined && (obj.grantee = message.grantee);
     return obj;
@@ -184,10 +186,10 @@ export const EventRevoke = {
 
   fromPartial(object: DeepPartial<EventRevoke>): EventRevoke {
     const message = { ...baseEventRevoke } as EventRevoke;
-    if (object.msgTypeUrl !== undefined && object.msgTypeUrl !== null) {
-      message.msgTypeUrl = object.msgTypeUrl;
+    if (object.msg_type_url !== undefined && object.msg_type_url !== null) {
+      message.msg_type_url = object.msg_type_url;
     } else {
-      message.msgTypeUrl = "";
+      message.msg_type_url = "";
     }
     if (object.granter !== undefined && object.granter !== null) {
       message.granter = object.granter;

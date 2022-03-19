@@ -1,6 +1,4 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
-// @ts-ignore
-import { SpVuexError } from '@starport/vuex'
 
 import { GenericAuthorization } from "./module/types/cosmos/authz/v1beta1/authz"
 import { Grant } from "./module/types/cosmos/authz/v1beta1/authz"
@@ -118,7 +116,7 @@ export default {
 					const sub=JSON.parse(subscription)
 					await dispatch(sub.action, sub.payload)
 				}catch(e) {
-					throw new SpVuexError('Subscriptions: ' + e.message)
+					throw new Error('Subscriptions: ' + e.message)
 				}
 			})
 		},
@@ -143,7 +141,7 @@ export default {
 				if (subscribe) commit('SUBSCRIBE', { action: 'QueryGrants', payload: { options: { all }, params: {...key},query }})
 				return getters['getGrants']( { params: {...key}, query}) ?? {}
 			} catch (e) {
-				throw new SpVuexError('QueryClient:QueryGrants', 'API Node Unavailable. Could not perform query: ' + e.message)
+				throw new Error('QueryClient:QueryGrants API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
@@ -158,9 +156,9 @@ export default {
 				return result
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgExec:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgExec:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgExec:Send', 'Could not broadcast Tx: '+ e.message)
+					throw new Error('TxClient:MsgExec:Send Could not broadcast Tx: '+ e.message)
 				}
 			}
 		},
@@ -173,9 +171,9 @@ export default {
 				return result
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgRevoke:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgRevoke:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgRevoke:Send', 'Could not broadcast Tx: '+ e.message)
+					throw new Error('TxClient:MsgRevoke:Send Could not broadcast Tx: '+ e.message)
 				}
 			}
 		},
@@ -188,9 +186,9 @@ export default {
 				return result
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgGrant:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgGrant:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgGrant:Send', 'Could not broadcast Tx: '+ e.message)
+					throw new Error('TxClient:MsgGrant:Send Could not broadcast Tx: '+ e.message)
 				}
 			}
 		},
@@ -202,10 +200,9 @@ export default {
 				return msg
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgExec:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgExec:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgExec:Create', 'Could not create message: ' + e.message)
-					
+					throw new Error('TxClient:MsgExec:Create Could not create message: ' + e.message)
 				}
 			}
 		},
@@ -216,10 +213,9 @@ export default {
 				return msg
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgRevoke:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgRevoke:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgRevoke:Create', 'Could not create message: ' + e.message)
-					
+					throw new Error('TxClient:MsgRevoke:Create Could not create message: ' + e.message)
 				}
 			}
 		},
@@ -230,10 +226,9 @@ export default {
 				return msg
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new SpVuexError('TxClient:MsgGrant:Init', 'Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgGrant:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new SpVuexError('TxClient:MsgGrant:Create', 'Could not create message: ' + e.message)
-					
+					throw new Error('TxClient:MsgGrant:Create Could not create message: ' + e.message)
 				}
 			}
 		},
