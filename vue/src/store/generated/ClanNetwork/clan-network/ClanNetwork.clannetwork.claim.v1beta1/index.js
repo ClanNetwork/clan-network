@@ -226,23 +226,6 @@ export default {
                 throw new SpVuexError('QueryClient:QueryClaimEthRecord', 'API Node Unavailable. Could not perform query: ' + e.message);
             }
         },
-        async sendMsgClaimFroEthAddress({ rootGetters }, { value, fee = [], memo = '' }) {
-            try {
-                const txClient = await initTxClient(rootGetters);
-                const msg = await txClient.msgClaimFroEthAddress(value);
-                const result = await txClient.signAndBroadcast([msg], { fee: { amount: fee,
-                        gas: "200000" }, memo });
-                return result;
-            }
-            catch (e) {
-                if (e == MissingWalletError) {
-                    throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Init', 'Could not initialize signing client. Wallet is required.');
-                }
-                else {
-                    throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Send', 'Could not broadcast Tx: ' + e.message);
-                }
-            }
-        },
         async sendMsgInitialClaim({ rootGetters }, { value, fee = [], memo = '' }) {
             try {
                 const txClient = await initTxClient(rootGetters);
@@ -260,18 +243,20 @@ export default {
                 }
             }
         },
-        async MsgClaimFroEthAddress({ rootGetters }, { value }) {
+        async sendMsgClaimFroEthAddress({ rootGetters }, { value, fee = [], memo = '' }) {
             try {
                 const txClient = await initTxClient(rootGetters);
                 const msg = await txClient.msgClaimFroEthAddress(value);
-                return msg;
+                const result = await txClient.signAndBroadcast([msg], { fee: { amount: fee,
+                        gas: "200000" }, memo });
+                return result;
             }
             catch (e) {
                 if (e == MissingWalletError) {
                     throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Init', 'Could not initialize signing client. Wallet is required.');
                 }
                 else {
-                    throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Create', 'Could not create message: ' + e.message);
+                    throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Send', 'Could not broadcast Tx: ' + e.message);
                 }
             }
         },
@@ -287,6 +272,21 @@ export default {
                 }
                 else {
                     throw new SpVuexError('TxClient:MsgInitialClaim:Create', 'Could not create message: ' + e.message);
+                }
+            }
+        },
+        async MsgClaimFroEthAddress({ rootGetters }, { value }) {
+            try {
+                const txClient = await initTxClient(rootGetters);
+                const msg = await txClient.msgClaimFroEthAddress(value);
+                return msg;
+            }
+            catch (e) {
+                if (e == MissingWalletError) {
+                    throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Init', 'Could not initialize signing client. Wallet is required.');
+                }
+                else {
+                    throw new SpVuexError('TxClient:MsgClaimFroEthAddress:Create', 'Could not create message: ' + e.message);
                 }
             }
         },
