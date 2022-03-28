@@ -27,6 +27,8 @@ Example:
 			config := serverCtx.Config
 
 			config.SetRoot(clientCtx.HomeDir)
+
+			
 	
 			
 			fmt.Printf("This logic needs to be implemented",cdc)
