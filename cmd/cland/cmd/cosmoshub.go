@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	claimtypes "github.com/ClanNetwork/clan-network/x/claim/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -14,10 +15,9 @@ import (
 )
 
 const (
-	MaxCap                 = 50000000000
-	MinStaked              = 35000000
-	TotalClanAirdropAmount = 80000000000000
-	DefaultDenom           = "uclan"
+	MaxCap       = 50000000000
+	MinStaked    = 35000000
+	DefaultDenom = "uclan"
 )
 
 type Snapshot struct {
@@ -36,71 +36,72 @@ type SnapshotAccount struct {
 	AirdropOwnershipPercent sdk.Dec `json:"staked_ownership_percent"`
 }
 
-//type Account struct {
-//	Address       string `json:"address,omitempty"`
-//	AccountNumber uint64 `json:"account_number,omitempty"`
-//	Sequence      uint64 `json:"sequence,omitempty"`
-//}
+func SnapshotToClaimRecordsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "snapshot-to-claim-records [input-snapshot-file1] [input-snapshot-file2] ...",
+		Short: "Transform a Cosmos Hub snapshot to a Claim module records",
+		Long: `Transform a Cosmos Hub snapshot (or multiple) to Claim records in a format suitable for the Claim module genesis state
+Example:
+	cland snapshot-to-claim-records snapshot_atom.json snapshot_scrt.json ...
+`,
 
-//func SnapshotToClaimRecordsCmd() *cobra.Command {
-//	cmd := &cobra.Command{
-//		Use:   "snapshot-to-claim-records [input-snapshot-file] [output-claim-records-json]",
-//		Short: "Transform a Cosmos Hub snapshot to a Claim module records",
-//		Long: `Transform a Cosmos Hub snapshot to Claim records in a format suitable for the Claim module genesis state
-//Example:
-//	cland snapshot-to-claim-records snapshot.json claim-records.json
-//`,
-//
-//		RunE: func(cmd *cobra.Command, args []string) error {
-//			snapshotFile := args[0]
-//			snapshotJSON, err := ioutil.ReadFile(snapshotFile)
-//			if err != nil {
-//				return err
-//			}
-//
-//			var snapshot Snapshot
-//			err = json.Unmarshal(snapshotJSON, &snapshot)
-//			if err != nil {
-//				return err
-//			}
-//
-//			claimRecords := claimRecordsFromSnapshot(snapshot)
-//			claimRecordsJSON, err := json.MarshalIndent(claimRecords, "", "    ")
-//			if err != nil {
-//				return err
-//			}
-//			outputFile := args[1]
-//			err = ioutil.WriteFile(outputFile, claimRecordsJSON, 0600)
-//
-//			return err
-//		}}
-//	return cmd
-//}
-//
-//func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
-//	claimRecords := make([]claimtypes.ClaimRecord, snapshot.TotalAirdropAccounts)
-//
-//	i := 0
-//	for _, acc := range snapshot.Accounts {
-//		claimRecords[i] = claimtypes.ClaimRecord{
-//			Address: acc.Address,
-//			InitialClaimableAmount: sdk.Coins{sdk.Coin{
-//				Denom:  DefaultDenom,
-//				Amount: acc.ClanBalance,
-//			}},
-//			ActionCompleted: []bool{false, false, false, false, false},
-//		}
-//
-//		i++
-//	}
-//
-//	return claimRecords
-//}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var claimRecords []claimtypes.ClaimRecord
+			for _, arg := range args {
+				snapshotFile := arg
+				snapshotJSON, err := ioutil.ReadFile(snapshotFile)
+				if err != nil {
+					return err
+				}
+
+				var snapshot Snapshot
+				err = json.Unmarshal(snapshotJSON, &snapshot)
+				if err != nil {
+					return err
+				}
+
+				records := claimRecordsFromSnapshot(snapshot)
+				claimRecords = append(claimRecords, records...)
+			}
+
+			claimRecordsJSON, err := json.MarshalIndent(claimRecords, "", "    ")
+			if err != nil {
+				return err
+			}
+			fmt.Printf(string(claimRecordsJSON[:]))
+
+			return nil
+		}}
+	return cmd
+}
+
+func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
+	claimRecords := make([]claimtypes.ClaimRecord, snapshot.TotalAirdropAccounts)
+
+	i := 0
+	for _, acc := range snapshot.Accounts {
+		if acc.AirdropOwnershipPercent.GT(sdk.NewDec(0)) {
+			clanAlloc := acc.AirdropOwnershipPercent.MulInt(snapshot.TotalClanAllocation)
+			claimRecords[i] = claimtypes.ClaimRecord{
+				Address: acc.Address,
+				InitialClaimableAmount: sdk.Coins{sdk.Coin{
+					Denom:  DefaultDenom,
+					Amount: clanAlloc.RoundInt(),
+				}},
+				ActionCompleted: []bool{false, false, false, false, false},
+			}
+
+			i++
+		}
+	}
+
+	return claimRecords
+}
 
 func ExportSnapshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export-hub-snapshot [input-genesis-file] [clan-allocation] [output-snapshot-json]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "export-hub-snapshot [input-genesis-file] [clan-allocation]",
+		Args:  cobra.ExactArgs(2),
 		Short: "Export snapshot from a provided Cosmos Hub genesis export",
 		Long: `Export snapshot from a provided Cosmos Hub genesis export
 Example:
@@ -116,7 +117,6 @@ Example:
 
 			genesisFile := args[0]
 			clanAllocation := args[1]
-			outputFile := args[2]
 
 			var snapshot Snapshot
 			clanAllocationInt, ok := sdk.NewIntFromString(clanAllocation)
@@ -131,7 +131,8 @@ Example:
 				return fmt.Errorf("failed to marshal snapshot: %w", err)
 			}
 
-			err = ioutil.WriteFile(outputFile, snapshotJSON, 0600)
+			fmt.Printf(string(snapshotJSON[:]))
+
 			return err
 
 		},
