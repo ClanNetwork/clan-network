@@ -28,7 +28,7 @@ func main() {
 	rootCmd.AddCommand(airdrop.ExportSecretSnapshotCmd())
 	rootCmd.AddCommand(airdrop.ExportTerraSnapshotCmd())
 	rootCmd.AddCommand(airdrop.ExportSnapshotCmd())
-	//rootCmd.AddCommand(airdrop.SnapshotToClaimRecordsCmd())
+	rootCmd.AddCommand(airdrop.SnapshotToClaimRecordsCmd())
 	rootCmd.AddCommand(airdrop.ExportTangoSnapshotCmd())
 	rootCmd.AddCommand(airdrop.ExportSnapshotCmd())
 	rootCmd.AddCommand(airdrop.AddAirdropCmd())
