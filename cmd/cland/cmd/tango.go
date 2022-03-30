@@ -42,7 +42,7 @@ type SnapshotAccountTango struct {
 	AirdropOwnershipPercent sdk.Dec `json:"ownership_percent"`
 }
 
-func ToChecksumAddress(address string) string {
+func toChecksumAddress(address string) string {
 	address = strings.Replace(strings.ToLower(address), "0x", "", 1)
 	hash := sha3.NewLegacyKeccak256()
 	_, _ = hash.Write([]byte(address))
@@ -125,7 +125,7 @@ Example:
 				}
 
 				intBalance :=  sdk.NewInt(int64(holder.Balance))
-				checksummedAddress := ToChecksumAddress(address)
+				checksummedAddress := toChecksumAddress(address)
 				totalTangoBalance = totalTangoBalance.Add(intBalance)
 				acc := SnapshotAccountTango{
 					EthAddress:              checksummedAddress,

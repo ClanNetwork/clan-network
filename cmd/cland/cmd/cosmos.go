@@ -3,6 +3,9 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"strconv"
+
 	claimtypes "github.com/ClanNetwork/clan-network/x/claim/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -11,13 +14,12 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 )
 
 const (
-	MaxCap       = 50000000000
 	MinStaked    = 35000000
 	DefaultDenom = "uclan"
+	flagWhalecap = "whalecap"
 )
 
 type Snapshot struct {
@@ -33,7 +35,7 @@ type SnapshotAccount struct {
 	Address                 string  `json:"cosmoshub_address"`
 	StakedBalance           sdk.Int `json:"staked_balance"`
 	StakedForAirdropBalance sdk.Int `json:"staked_for_airdrop"`
-	AirdropOwnershipPercent sdk.Dec `json:"staked_ownership_percent"`
+	AirdropOwnershipPercent sdk.Dec `json:"airdrop_ownership_percent"`
 }
 
 func SnapshotToClaimRecordsCmd() *cobra.Command {
@@ -100,12 +102,12 @@ func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
 
 func ExportSnapshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export-hub-snapshot [input-genesis-file] [clan-allocation]",
-		Args:  cobra.ExactArgs(2),
+		Use:   "export-snapshot [input-genesis-file] [output-genesis-file] [clan-allocation] --whalecap=[whalecap]",
+		Args:  cobra.ExactArgs(3),
 		Short: "Export snapshot from a provided Cosmos Hub genesis export",
 		Long: `Export snapshot from a provided Cosmos Hub genesis export
 Example:
-	cland export-hub-snapshot genesis.json hub-snapshot.json
+	cland export-snapshot cosmoshub-genesis.json cosmoshub-snapshot-output.json --whalecap=50000000000
 `,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -116,7 +118,19 @@ Example:
 			config.SetRoot(clientCtx.HomeDir)
 
 			genesisFile := args[0]
-			clanAllocation := args[1]
+			outputFile := args[1]
+			clanAllocation := args[2]
+
+			// Parse CLI input for juno supply
+			whalecapStr, err := cmd.Flags().GetString(flagWhalecap)
+			if err != nil {
+				return fmt.Errorf("failed to get whalecap: %w", err)
+			}
+
+			whalecap, err := strconv.ParseInt(whalecapStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("failed to parse whalecap: %s %w", whalecapStr, err)
+			}
 
 			var snapshot Snapshot
 			clanAllocationInt, ok := sdk.NewIntFromString(clanAllocation)
@@ -125,42 +139,43 @@ Example:
 			}
 			snapshot.TotalClanAllocation = clanAllocationInt
 
-			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot)
+			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot, whalecap)
 			snapshotJSON, err := json.MarshalIndent(snapshot, "", "    ")
 			if err != nil {
 				return fmt.Errorf("failed to marshal snapshot: %w", err)
 			}
 
-			fmt.Printf(string(snapshotJSON[:]))
-
+			err = ioutil.WriteFile(outputFile, snapshotJSON, 0600)
 			return err
 
 		},
 	}
 
+	cmd.Flags().String(flagWhalecap, "", "SCRT/LUNA/ATOM whale cap")
 	flags.AddQueryFlagsToCmd(cmd)
+
 	return cmd
 }
 
 // compare balance with max cap
-func accountedForBalance(balance sdk.Int) sdk.Int {
+func accountedForBalance(balance sdk.Int,whalecap int64) sdk.Int {
 	if balance.LT(sdk.NewInt(MinStaked)) {
 		return sdk.ZeroInt()
 	}
 
-	return sdk.MinInt(balance, sdk.NewInt(MaxCap))
+	return sdk.MinInt(balance, sdk.NewInt(whalecap))
 }
 
-func getDenominator(snapshotAccs map[string]SnapshotAccount) sdk.Int {
+func getDenominator(snapshotAccs map[string]SnapshotAccount,whalecap int64) sdk.Int {
 	denominator := sdk.ZeroInt()
 	for _, acc := range snapshotAccs {
-		denominator = denominator.Add(accountedForBalance(acc.StakedBalance))
+		denominator = denominator.Add(accountedForBalance(acc.StakedBalance, whalecap))
 
 	}
 	return denominator
 }
 
-func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string, snapshot Snapshot) Snapshot {
+func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string, snapshot Snapshot, whalecap int64) Snapshot {
 	appState, _, _ := genutiltypes.GenesisStateFromGenFile(genesisFile)
 	stakingGenState := stakingtypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 
@@ -192,11 +207,11 @@ func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string,
 		totalStaked = totalStaked.Add(staked)
 	}
 
-	totalAccountedForAmount := getDenominator(snapshotAccs)
+	totalAccountedForAmount := getDenominator(snapshotAccs, whalecap)
 	totalAirdropAccounts := 0
 	for _, acc := range snapshotAccs {
 		currAccBalance := acc.StakedBalance
-		curAccountedFor := accountedForBalance(currAccBalance).ToDec()
+		curAccountedFor := accountedForBalance(currAccBalance, whalecap).ToDec()
 		acc.StakedForAirdropBalance = curAccountedFor.RoundInt()
 		acc.AirdropOwnershipPercent = curAccountedFor.QuoInt(totalAccountedForAmount)
 

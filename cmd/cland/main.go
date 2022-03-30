@@ -25,13 +25,9 @@ func main() {
 	rootCmd.AddCommand(
 		server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler),
 	)
-	rootCmd.AddCommand(airdrop.ExportSecretSnapshotCmd())
-	rootCmd.AddCommand(airdrop.ExportTerraSnapshotCmd())
 	rootCmd.AddCommand(airdrop.ExportSnapshotCmd())
 	rootCmd.AddCommand(airdrop.SnapshotToClaimRecordsCmd())
 	rootCmd.AddCommand(airdrop.ExportTangoSnapshotCmd())
-	rootCmd.AddCommand(airdrop.ExportSnapshotCmd())
-	rootCmd.AddCommand(airdrop.AddAirdropCmd())
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}

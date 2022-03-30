@@ -4,13 +4,13 @@ import { StdFee } from "@cosmjs/launchpad";
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
-import { MsgInitialClaim } from "./types/clan/claim/v1beta1/tx";
 import { MsgClaimFroEthAddress } from "./types/clan/claim/v1beta1/tx";
+import { MsgInitialClaim } from "./types/clan/claim/v1beta1/tx";
 
 
 const types = [
-  ["/ClanNetwork.clannetwork.claim.v1beta1.MsgInitialClaim", MsgInitialClaim],
   ["/ClanNetwork.clannetwork.claim.v1beta1.MsgClaimFroEthAddress", MsgClaimFroEthAddress],
+  ["/ClanNetwork.clannetwork.claim.v1beta1.MsgInitialClaim", MsgInitialClaim],
   
 ];
 export const MissingWalletError = new Error("wallet is required");
@@ -43,8 +43,8 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
 
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
-    msgInitialClaim: (data: MsgInitialClaim): EncodeObject => ({ typeUrl: "/ClanNetwork.clannetwork.claim.v1beta1.MsgInitialClaim", value: MsgInitialClaim.fromPartial( data ) }),
     msgClaimFroEthAddress: (data: MsgClaimFroEthAddress): EncodeObject => ({ typeUrl: "/ClanNetwork.clannetwork.claim.v1beta1.MsgClaimFroEthAddress", value: MsgClaimFroEthAddress.fromPartial( data ) }),
+    msgInitialClaim: (data: MsgInitialClaim): EncodeObject => ({ typeUrl: "/ClanNetwork.clannetwork.claim.v1beta1.MsgInitialClaim", value: MsgInitialClaim.fromPartial( data ) }),
     
   };
 };
