@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	MinStaked    = 35000000
 	DefaultDenom = "uclan"
 	flagWhalecap = "whalecap"
+	flagMinStaked = "minStaked"
 )
 
 type Snapshot struct {
@@ -102,7 +102,7 @@ func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
 
 func ExportSnapshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export-snapshot [input-genesis-file] [output-genesis-file] [clan-allocation] --whalecap=[whalecap]",
+		Use:   "export-snapshot [input-genesis-file] [output-genesis-file] [clan-allocation] --minStaked=[minStaked] --whalecap=[whalecap]",
 		Args:  cobra.ExactArgs(3),
 		Short: "Export snapshot from a provided Cosmos Hub genesis export",
 		Long: `Export snapshot from a provided Cosmos Hub genesis export
@@ -121,10 +121,20 @@ Example:
 			outputFile := args[1]
 			clanAllocation := args[2]
 
+			minStaked := int64(0)
+
 			// Parse CLI input for juno supply
 			whalecapStr, err := cmd.Flags().GetString(flagWhalecap)
 			if err != nil {
 				return fmt.Errorf("failed to get whalecap: %w", err)
+			}
+
+			minStakedStr, err := cmd.Flags().GetString(flagMinStaked)
+			if err == nil && len(minStakedStr) > 0 {
+				minStaked, err = strconv.ParseInt(minStakedStr, 10, 64)
+				if err != nil {
+					return fmt.Errorf("failed to parse minStaked: %s %w", minStakedStr, err)
+				}
 			}
 
 			whalecap, err := strconv.ParseInt(whalecapStr, 10, 64)
@@ -139,7 +149,8 @@ Example:
 			}
 			snapshot.TotalClanAllocation = clanAllocationInt
 
-			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot, whalecap)
+			fmt.Printf("Exporting snapshot. whalecap: %d min staked: %d",whalecap, minStaked)
+			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot, whalecap, minStaked)
 			snapshotJSON, err := json.MarshalIndent(snapshot, "", "    ")
 			if err != nil {
 				return fmt.Errorf("failed to marshal snapshot: %w", err)
@@ -152,30 +163,31 @@ Example:
 	}
 
 	cmd.Flags().String(flagWhalecap, "", "SCRT/LUNA/ATOM whale cap")
+	cmd.Flags().String(flagMinStaked, "", "SCRT/LUNA/ATOM minimun staked")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
 
 // compare balance with max cap
-func accountedForBalance(balance sdk.Int,whalecap int64) sdk.Int {
-	if balance.LT(sdk.NewInt(MinStaked)) {
+func accountedForBalance(balance sdk.Int, minStaked int64 ,whalecap int64) sdk.Int {
+	if balance.LT(sdk.NewInt(minStaked)) {
 		return sdk.ZeroInt()
 	}
 
 	return sdk.MinInt(balance, sdk.NewInt(whalecap))
 }
 
-func getDenominator(snapshotAccs map[string]SnapshotAccount,whalecap int64) sdk.Int {
+func getDenominator(snapshotAccs map[string]SnapshotAccount, minStaked int64, whalecap int64) sdk.Int {
 	denominator := sdk.ZeroInt()
 	for _, acc := range snapshotAccs {
-		denominator = denominator.Add(accountedForBalance(acc.StakedBalance, whalecap))
+		denominator = denominator.Add(accountedForBalance(acc.StakedBalance, minStaked, whalecap))
 
 	}
 	return denominator
 }
 
-func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string, snapshot Snapshot, whalecap int64) Snapshot {
+func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string, snapshot Snapshot, whalecap int64,minStaked int64) Snapshot {
 	appState, _, _ := genutiltypes.GenesisStateFromGenFile(genesisFile)
 	stakingGenState := stakingtypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 
@@ -207,11 +219,11 @@ func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string,
 		totalStaked = totalStaked.Add(staked)
 	}
 
-	totalAccountedForAmount := getDenominator(snapshotAccs, whalecap)
+	totalAccountedForAmount := getDenominator(snapshotAccs,minStaked, whalecap)
 	totalAirdropAccounts := 0
 	for _, acc := range snapshotAccs {
 		currAccBalance := acc.StakedBalance
-		curAccountedFor := accountedForBalance(currAccBalance, whalecap).ToDec()
+		curAccountedFor := accountedForBalance(currAccBalance,minStaked, whalecap).ToDec()
 		acc.StakedForAirdropBalance = curAccountedFor.RoundInt()
 		acc.AirdropOwnershipPercent = curAccountedFor.QuoInt(totalAccountedForAmount)
 
