@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -120,12 +119,6 @@ Example:
 			// Go through all holders and checksum their address + cal total TANGO balance 
 			for _, holder := range holders.Holders {
 				address := holder.EthAddress
-
-				validAddress, _ := regexp.MatchString("^(0x)?[0-9a-f]{40}", address) 
-				if !validAddress {
-					fmt.Printf("Given address %v is not a valid Ethereum Address\n", address)
-					continue
-				} 
 
 				if holder.Balance < 100.0 {
 					continue
