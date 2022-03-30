@@ -25,10 +25,10 @@ func ExportSnapshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export-snapshot [input-genesis-file] [output-genesis-file] [clan-allocation] --minStaked=[minStaked] --whalecap=[whalecap]",
 		Args:  cobra.ExactArgs(3),
-		Short: "Export snapshot from a provided Cosmos Hub genesis export",
-		Long: `Export snapshot from a provided Cosmos Hub genesis export
-Example:
-	cland export-snapshot cosmoshub-genesis.json cosmoshub-snapshot-output.json --whalecap=50000000000
+		Short: "Export snapshot from a provided cosmos genesis export",
+		Long: `Export snapshot from a provided cosmos genesis export
+			   Example:
+			   cland export-snapshot airdrop-snapshot-cosmoshub.json airdrop-snapshot-cosmoshub-output.json 80000000000000 --minStaked=35000000 --whalecap=50000000000
 `,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -44,7 +44,6 @@ Example:
 
 			minStaked := int64(0)
 
-			// Parse CLI input for juno supply
 			whalecapStr, err := cmd.Flags().GetString(flagWhalecap)
 			if err != nil {
 				return fmt.Errorf("failed to get whalecap: %w", err)
@@ -156,7 +155,7 @@ func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string,
 	}
 
 	snapshot.Accounts = snapshotAccs
-	snapshot.TotalAirdropAccounts = uint64(totalAirdropAccounts)
+	snapshot.TotalAirdropAccounts = totalAirdropAccounts
 	snapshot.TotalAccountedForStakedAmount = totalAccountedForAmount
 	snapshot.TotalStakedAmount = totalStaked
 

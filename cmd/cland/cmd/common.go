@@ -6,15 +6,19 @@ import (
 	"io/ioutil"
 
 	claimtypes "github.com/ClanNetwork/clan-network/x/claim/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 )
 
+const (
+	flagOutputFile = "outputFile"
+)
 
 
 type Snapshot struct {
 	Accounts                      map[string]SnapshotAccount `json:"accounts"`
-	TotalAirdropAccounts          uint64                     `json:"total_airdrop_accounts"`
+	TotalAirdropAccounts          int                    	 `json:"total_airdrop_accounts"`
 	TotalAccountedForStakedAmount sdk.Int                    `json:"total_accounted_for_amount"`
 	TotalStakedAmount             sdk.Int                    `json:"total_staked_amount"`
 	TotalClanAllocation           sdk.Int                    `json:"total_allocated_clan"`
@@ -22,7 +26,7 @@ type Snapshot struct {
 
 // SnapshotAccount provide fields of snapshot per account
 type SnapshotAccount struct {
-	Address                 string  `json:"cosmoshub_address"`
+	Address                 string  `json:"origin_address"`
 	StakedBalance           sdk.Int `json:"staked_balance"`
 	StakedForAirdropBalance sdk.Int `json:"staked_for_airdrop"`
 	AirdropOwnershipPercent sdk.Dec `json:"airdrop_ownership_percent"`
@@ -30,14 +34,20 @@ type SnapshotAccount struct {
 
 func SnapshotToClaimRecordsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "snapshot-to-claim-records [input-snapshot-file1] [input-snapshot-file2] ...",
+		Use:   "snapshot-to-claim-records [input-snapshot-file1] [input-snapshot-file2] ... --outputFile=[outputFile]",
 		Short: "Transform a Cosmos Hub snapshot to a Claim module records",
-		Long: `Transform a Cosmos Hub snapshot (or multiple) to Claim records in a format suitable for the Claim module genesis state
-Example:
-	cland snapshot-to-claim-records snapshot_atom.json snapshot_scrt.json ...
-`,
+		Long: `Transform a Cosmos Hub snapshot (or multiple) to Claim records
+			   in a format suitable for the Claim module genesis state
+			   Example:
+			   cland snapshot-to-claim-records snapshot_atom.json snapshot_scrt.json --outputFile=claim-records.json
+			`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
+			outputFile, err := cmd.Flags().GetString(flagOutputFile)
+			if err != nil {
+				return fmt.Errorf("failed to get output file: %w", err)
+			}
+
 			var claimRecords []claimtypes.ClaimRecord
 			for _, arg := range args {
 				snapshotFile := arg
@@ -61,10 +71,13 @@ Example:
 				return err
 			}
 
-			fmt.Printf(string(claimRecordsJSON[:]))
+			err = ioutil.WriteFile(outputFile, claimRecordsJSON, 0600)
 
-			return nil	
+			return err
 		}}
+
+	cmd.Flags().String(flagOutputFile, "", "output file for the claim records")
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 

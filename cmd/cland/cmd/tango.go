@@ -9,20 +9,21 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/sha3"
 )
 
-// Users struct which contains
-// an array of users
+const (
+	flagMinTango = "minTango"
+)
+
 type TangoHolders struct {
     Holders []TangoHolder `json:"holders"`
 }
 
-// User struct which contains a name
-// a type and a list of social links
 type TangoHolder struct {
     EthAddress   string `json:"address"`
     Balance   float64 `json:"total"`
@@ -64,11 +65,11 @@ func toChecksumAddress(address string) string {
 
 func ExportTangoSnapshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export-tango-snapshot [input-genesis-file] [clan-allocation] [output-snapshot-json]",
+		Use:   "export-tango-snapshot [input-genesis-file] [output-snapshot-json] [clan-allocation] --minTango=[minTango]",
 		Short: "Export snapshot from a provided TANGO holders snapshot file",
 		Long: `Export snapshot from a provided TANGO holders snapshot file"
-Example:
-	cland export-tango-snapshot tango-holders.json 160000000000000 hub-snapshot.json
+			   Example:
+			   cland export-tango-snapshot airdrop-snapshot-tango.json airdrop-snapshot-tango-output.json 160000000000000 --minTango=100
 `,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -81,9 +82,18 @@ Example:
 			config.SetRoot(clientCtx.HomeDir)
 	
 			tangoHoldersFile := args[0]
-			clanAllocation := args[1]
-			outputFile := args[2]
+			outputFile := args[1]
+			clanAllocation := args[2]
+			minTango := float64(0)
+			minTangoStr, err := cmd.Flags().GetString(flagMinTango)
+			if err == nil && len(minTangoStr) > 0 {
+				minTango, err = strconv.ParseFloat(minTangoStr, 64)
+				if err != nil {
+					return fmt.Errorf("failed to parse minTango: %s %w", minTangoStr, err)
+				}
+			}
 
+			fmt.Printf("Exporting snapshot with min TANGO %f...", minTango)
 
 			byteValue, _ := ioutil.ReadFile(tangoHoldersFile)
 
@@ -101,19 +111,21 @@ Example:
 			if !ok {
 				return fmt.Errorf("failed to parse clan-allocation to number: %s", clanAllocation)
 			}
-			
+
+			totalAirdropAccounts := 0
 
 			// Go through all holders and checksum their address + cal total TANGO balance 
 			for _, holder := range holders.Holders {
 				address := holder.EthAddress
 
-				if holder.Balance < 100.0 {
+				if holder.Balance < minTango {
 					continue
 				}
 
 				intBalance :=  sdk.NewInt(int64(holder.Balance))
 				checksummedAddress := toChecksumAddress(address)
 				totalTangoBalance = totalTangoBalance.Add(intBalance)
+				totalAirdropAccounts = totalAirdropAccounts + 1
 				acc := SnapshotAccount{
 					Address:              checksummedAddress,
 					StakedBalance:            intBalance,
@@ -131,6 +143,7 @@ Example:
 
 			snapshot.Accounts = snapshotAccs	
 			snapshot.TotalClanAllocation = clanAllocationInt		
+			snapshot.TotalAirdropAccounts = totalAirdropAccounts		
 
 			// write results to output file
 			snapshotJSON, err := json.MarshalIndent(snapshot, "", "    ")
@@ -144,5 +157,8 @@ Example:
 		},
 	}
 
+	cmd.Flags().String(flagMinTango, "", "TANGO minimun balace")
+	flags.AddQueryFlagsToCmd(cmd)
+	
 	return cmd
 }
