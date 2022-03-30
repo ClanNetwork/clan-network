@@ -28,19 +28,6 @@ type TangoHolder struct {
     Balance   float64 `json:"total"`
 }
 
-type SnapshotOutputTango struct {
-	Accounts                      map[string]SnapshotAccountTango `json:"accounts"`
-	TotalAirdropAccounts          uint64                     `json:"total_airdrop_accounts"`
-	TotalClanAllocation           sdk.Int                    `json:"total_allocated_clan"`
-}
-
-// SnapshotAccount provide fields of snapshot per account
-type SnapshotAccountTango struct {
-	EthAddress				string  `json:"eth_address"`
-	TotalBalance			sdk.Int `json:"total_balance"`
-	ClanAllocation 			sdk.Int `json:"clan_balance"`
-	AirdropOwnershipPercent sdk.Dec `json:"ownership_percent"`
-}
 
 func toChecksumAddress(address string) string {
 	address = strings.Replace(strings.ToLower(address), "0x", "", 1)
@@ -105,8 +92,8 @@ Example:
 			json.Unmarshal(byteValue, &holders)
 
 			// init variables
-			var snapshot SnapshotOutputTango
-			snapshotAccs := make(map[string]SnapshotAccountTango)
+			var snapshot Snapshot
+			snapshotAccs := make(map[string]SnapshotAccount)
 			totalTangoBalance := sdk.ZeroInt()
 
 			// check clan allocation validity
@@ -127,10 +114,9 @@ Example:
 				intBalance :=  sdk.NewInt(int64(holder.Balance))
 				checksummedAddress := toChecksumAddress(address)
 				totalTangoBalance = totalTangoBalance.Add(intBalance)
-				acc := SnapshotAccountTango{
-					EthAddress:              checksummedAddress,
-					TotalBalance:            intBalance,
-					ClanAllocation: 		 sdk.ZeroInt(),
+				acc := SnapshotAccount{
+					Address:              checksummedAddress,
+					StakedBalance:            intBalance,
 					AirdropOwnershipPercent: sdk.ZeroDec(),
 				}
 				snapshotAccs[checksummedAddress] = acc
@@ -138,11 +124,9 @@ Example:
 
 			// Calculate clan balance for each holder
 			for _, holder := range snapshotAccs {
-				ownershipPercent := holder.TotalBalance.ToDec().QuoInt(totalTangoBalance)
-				clanAllocation := ownershipPercent.MulInt(clanAllocationInt)
-				holder.ClanAllocation = clanAllocation.RoundInt()
+				ownershipPercent := holder.StakedBalance.ToDec().QuoInt(totalTangoBalance)
 				holder.AirdropOwnershipPercent = ownershipPercent
-				snapshotAccs[holder.EthAddress] = holder
+				snapshotAccs[holder.Address] = holder
 			}
 
 			snapshot.Accounts = snapshotAccs	
