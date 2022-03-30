@@ -70,6 +70,7 @@ Example:
 			if err != nil {
 				return err
 			}
+
 			fmt.Printf(string(claimRecordsJSON[:]))
 
 			return nil
@@ -149,7 +150,7 @@ Example:
 			}
 			snapshot.TotalClanAllocation = clanAllocationInt
 
-			fmt.Printf("Exporting snapshot. whalecap: %d min staked: %d",whalecap, minStaked)
+			fmt.Printf("Exporting snapshot with whalecap: %d and min staked %d params...", whalecap, minStaked)
 			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot, whalecap, minStaked)
 			snapshotJSON, err := json.MarshalIndent(snapshot, "", "    ")
 			if err != nil {
