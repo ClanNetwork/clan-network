@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	claimtypes "github.com/ClanNetwork/clan-network/x/claim/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -162,3 +163,78 @@ func ExportTangoSnapshotCmd() *cobra.Command {
 	
 	return cmd
 }
+
+
+
+func SnapshotToClaimEthRecordsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "snapshot-to-claim-eth-records [input-snapshot-file1] [input-snapshot-file2] ... --outputFile=[outputFile]",
+		Short: "Transform a Cosmos Hub snapshot to a Claim module records",
+		Long: `Transform a Cosmos Hub snapshot (or multiple) to Claim records
+			   in a format suitable for the Claim module genesis state
+			   Example:
+			   cland snapshot-to-claim-eth-records snapshot_atom.json snapshot_scrt.json --outputFile=claim-eth-records.json
+			`,
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			outputFile, err := cmd.Flags().GetString(flagOutputFile)
+			if err != nil {
+				return fmt.Errorf("failed to get output file: %w", err)
+			}
+
+			var claimRecords []claimtypes.ClaimEthRecord
+			for _, arg := range args {
+				snapshotFile := arg
+				snapshotJSON, err := ioutil.ReadFile(snapshotFile)
+				if err != nil {
+					return err
+				}
+
+				var snapshot Snapshot
+				err = json.Unmarshal(snapshotJSON, &snapshot)
+				if err != nil {
+					return err
+				}
+
+				records := claimEthRecordsFromSnapshot(snapshot)
+				claimRecords = append(claimRecords, records...)
+			}
+
+			claimRecordsJSON, err := json.MarshalIndent(claimRecords, "", "    ")
+			if err != nil {
+				return err
+			}
+
+			err = ioutil.WriteFile(outputFile, claimRecordsJSON, 0600)
+
+			return err
+		}}
+
+	cmd.Flags().String(flagOutputFile, "", "output file for the claim records")
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func claimEthRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimEthRecord {
+	claimRecords := make([]claimtypes.ClaimEthRecord, snapshot.TotalAirdropAccounts)
+
+	i := 0
+	for _, acc := range snapshot.Accounts {
+		if acc.AirdropOwnershipPercent.GT(sdk.NewDec(0)) {
+			clanAlloc := acc.AirdropOwnershipPercent.MulInt(snapshot.TotalClanAllocation)
+			claimRecords[i] = claimtypes.ClaimEthRecord{
+				Address: acc.Address,
+				InitialClaimableAmount: sdk.Coins{sdk.Coin{
+					Denom:  DefaultDenom,
+					Amount: clanAlloc.RoundInt(),
+				}},
+				Completed: false,
+			}
+
+			i++
+		}
+	}
+
+	return claimRecords
+}
+
