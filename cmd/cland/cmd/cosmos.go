@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -21,14 +22,15 @@ const (
 	flagMinStaked = "minStaked"
 )
 
+
 func ExportSnapshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export-snapshot [input-genesis-file] [output-genesis-file] [clan-allocation] --minStaked=[minStaked] --whalecap=[whalecap]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "export-snapshot [input-genesis-file] [output-genesis-file] [clan-allocation] [exchanges-file] --minStaked=[minStaked] --whalecap=[whalecap]",
+		Args:  cobra.ExactArgs(4),
 		Short: "Export snapshot from a provided cosmos genesis export",
 		Long: `Export snapshot from a provided cosmos genesis export
 			   Example:
-			   cland export-snapshot airdrop-snapshot-cosmoshub.json airdrop-snapshot-cosmoshub-output.json 80000000000000 --minStaked=35000000 --whalecap=50000000000
+			   cland export-snapshot airdrop-snapshot-cosmoshub.json airdrop-snapshot-cosmoshub-output.json exchanges-cosmoshub.json 80000000000000 --minStaked=35000000 --whalecap=50000000000
 `,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -41,6 +43,7 @@ func ExportSnapshotCmd() *cobra.Command {
 			genesisFile := args[0]
 			outputFile := args[1]
 			clanAllocation := args[2]
+			exchangesFile := args[3]
 
 			minStaked := int64(0)
 
@@ -49,6 +52,7 @@ func ExportSnapshotCmd() *cobra.Command {
 				return fmt.Errorf("failed to get whalecap: %w", err)
 			}
 
+			// Read minStaked flag
 			minStakedStr, err := cmd.Flags().GetString(flagMinStaked)
 			if err == nil && len(minStakedStr) > 0 {
 				minStaked, err = strconv.ParseInt(minStakedStr, 10, 64)
@@ -57,20 +61,42 @@ func ExportSnapshotCmd() *cobra.Command {
 				}
 			}
 
+			// Read whalecap flag
 			whalecap, err := strconv.ParseInt(whalecapStr, 10, 64)
 			if err != nil {
 				return fmt.Errorf("failed to parse whalecap: %s %w", whalecapStr, err)
 			}
+
+			// Read exchanges file
+			exchangeJSON, err := os.Open(exchangesFile)
+			if err != nil {
+				return err
+			}
+			defer exchangeJSON.Close()
+
+			exchangeBytes, _ := ioutil.ReadAll(exchangeJSON)
+			var exchangeAddresses []string
+			err = json.Unmarshal(exchangeBytes, &exchangeAddresses)
+			if err != nil {
+				return err
+			}
+
+			exchangesMap := make(map[string]bool)
+			for _, p := range exchangeAddresses {
+				exchangesMap[p] = true
+			}
+
 
 			var snapshot Snapshot
 			clanAllocationInt, ok := sdk.NewIntFromString(clanAllocation)
 			if !ok {
 				return fmt.Errorf("failed to parse clan-allocation to number: %s", clanAllocation)
 			}
+
 			snapshot.TotalClanAllocation = clanAllocationInt
 
 			fmt.Printf("Exporting snapshot with whalecap: %d and min staked %d params...", whalecap, minStaked)
-			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot, whalecap, minStaked)
+			snapshot = exportSnapshotFromGenesisFile(clientCtx, genesisFile, snapshot, whalecap, minStaked, exchangesMap)
 			snapshotJSON, err := json.MarshalIndent(snapshot, "", "    ")
 			if err != nil {
 				return fmt.Errorf("failed to marshal snapshot: %w", err)
@@ -107,7 +133,7 @@ func getDenominator(snapshotAccs map[string]SnapshotAccount, minStaked int64, wh
 	return denominator
 }
 
-func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string, snapshot Snapshot, whalecap int64,minStaked int64) Snapshot {
+func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string, snapshot Snapshot, whalecap int64, minStaked int64,exchangesMap map[string]bool) Snapshot {
 	appState, _, _ := genutiltypes.GenesisStateFromGenFile(genesisFile)
 	stakingGenState := stakingtypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 
@@ -129,6 +155,12 @@ func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string,
 				StakedForAirdropBalance: sdk.ZeroInt(),
 				AirdropOwnershipPercent: sdk.ZeroDec(),
 			}
+		}
+
+		// Skip delegations to exchanges
+		if exchangesMap[delegation.ValidatorAddress] {
+			fmt.Printf("Found staker %s for on exchange validator %s,skiping..\n", address, delegation.ValidatorAddress)
+			continue
 		}
 
 		val := validators[delegation.ValidatorAddress]
