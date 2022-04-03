@@ -8,6 +8,7 @@ import (
 	claimtypes "github.com/ClanNetwork/clan-network/x/claim/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/spf13/cobra"
 )
 
@@ -81,6 +82,28 @@ func SnapshotToClaimRecordsCmd() *cobra.Command {
 	return cmd
 }
 
+func convertCosmosAddressToClan(address string) (sdk.AccAddress, error) {
+	config := sdk.GetConfig()
+	prefix := config.GetBech32AccountAddrPrefix()
+
+	_, bytes, err := bech32.DecodeAndConvert(address)
+	if err != nil {
+		return nil, err
+	}
+
+	newAddr, err := bech32.ConvertAndEncode(prefix, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkAddr, err := sdk.AccAddressFromBech32(newAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdkAddr, nil
+}
+
 func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
 	claimRecords := make([]claimtypes.ClaimRecord, snapshot.TotalAirdropAccounts)
 
@@ -88,8 +111,14 @@ func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
 	for _, acc := range snapshot.Accounts {
 		if acc.AirdropOwnershipPercent.GT(sdk.NewDec(0)) {
 			clanAlloc := acc.AirdropOwnershipPercent.MulInt(snapshot.TotalClanAllocation)
+			clanAddress, err := convertCosmosAddressToClan(acc.Address)
+
+			if err != nil {
+				fmt.Printf("Error converting cosmos address to clan")
+				panic(err)
+			}
 			claimRecords[i] = claimtypes.ClaimRecord{
-				Address: acc.Address,
+				Address: clanAddress.String(),
 				InitialClaimableAmount: sdk.Coins{sdk.Coin{
 					Denom:  DefaultDenom,
 					Amount: clanAlloc.RoundInt(),
