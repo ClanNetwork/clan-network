@@ -4,3 +4,7 @@ release/
 .idea/
 .vscode/
 .DS_Store
+bin/
+
+airdrop-snapshot-*.json
+exchanges-*.json
