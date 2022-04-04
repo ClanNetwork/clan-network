@@ -33,6 +33,17 @@ type SnapshotAccount struct {
     AirdropOwnershipPercent sdk.Dec `json:"airdrop_ownership_percent"`
 }
 
+type ClaimRecordsExport struct {
+	Records 				[]claimtypes.ClaimRecord 	`json:"claim_records"`
+	DuplicateAddresses 		[]DuplicateAddress 			`json:"duplicate_addresses"`
+}
+
+type DuplicateAddress struct {
+	TransformedAddress  string `json:"transformed_address"`
+	OriginalAddress  	string `json:"original_address"`
+	Allocation  		sdk.Int `json:"allocation"`
+}
+
 func SnapshotToClaimRecordsCmd() *cobra.Command {
     cmd := &cobra.Command{
         Use:   "snapshot-to-claim-records [input-snapshot-file1] [input-snapshot-file2] ... --outputFile=[outputFile]",
@@ -50,6 +61,7 @@ func SnapshotToClaimRecordsCmd() *cobra.Command {
             }
 
             var claimRecords []claimtypes.ClaimRecord
+            var duplicateAddresses []DuplicateAddress
             existingAddresses := make(map[string]bool)
             for _, arg := range args {
                 snapshotFile := arg
@@ -64,16 +76,46 @@ func SnapshotToClaimRecordsCmd() *cobra.Command {
                     return err
                 }
 
-                records := claimRecordsFromSnapshot(snapshot, existingAddresses)
+                records, duplicates := claimRecordsFromSnapshot(snapshot, existingAddresses)
 
                 for _, r := range records {
                     existingAddresses[r.ClaimAddress] = true
                 }
 
                 claimRecords = append(claimRecords, records...)
+                duplicateAddresses = append(duplicateAddresses, duplicates...)
             }
 
-            claimRecordsJSON, err := json.MarshalIndent(claimRecords, "", "    ")
+			// Merge duplicate allocations
+			for _, dup := range duplicateAddresses {
+				addr := dup.TransformedAddress
+				for i, claimRecord := range claimRecords {
+					if addr == claimRecord.ClaimAddress {
+						claimRecord.InitialClaimableAmount = claimRecord.InitialClaimableAmount.Add(sdk.Coin{
+							Denom:  DefaultDenom,
+							Amount: dup.Allocation,
+						})
+						claimRecords[i] = claimRecord
+					}
+				}
+			}
+
+			totalAllocated := sdk.ZeroInt()
+
+			for _, record := range claimRecords {
+				totalAllocated = totalAllocated.Add(record.InitialClaimableAmount.AmountOf(DefaultDenom))
+			}
+
+			fmt.Printf("Exporting %d claim records...\n", len(claimRecords))
+			fmt.Printf("Found %d duplicate records\n", len(duplicateAddresses))
+			fmt.Printf("Total CLAN allocated: %s \n", totalAllocated.String())
+
+			claimRecordsExport := ClaimRecordsExport{ 
+				Records:			claimRecords,
+				DuplicateAddresses: duplicateAddresses,
+			}
+
+            claimRecordsJSON, err := json.MarshalIndent(claimRecordsExport, "", "    ")
             if err != nil {
                 return err
             }
@@ -110,8 +152,9 @@ func convertCosmosAddressToClan(address string) (sdk.AccAddress, error) {
     return sdkAddr, nil
 }
 
-func claimRecordsFromSnapshot(snapshot Snapshot, existingAddresses map[string]bool) []claimtypes.ClaimRecord {
+func claimRecordsFromSnapshot(snapshot Snapshot, existingAddresses map[string]bool) ([]claimtypes.ClaimRecord, []DuplicateAddress) {
     claimRecords := make([]claimtypes.ClaimRecord, snapshot.TotalAirdropAccounts)
+	var duplicateAddresses []DuplicateAddress
 
     i := 0
     for _, acc := range snapshot.Accounts {
@@ -125,10 +168,16 @@ func claimRecordsFromSnapshot(snapshot Snapshot, existingAddresses map[string]bo
             }
 
             exists := existingAddresses[clanAddress.String()]
+
             if exists {
-                fmt.Printf(`Found existing address %s, skipping...` ,clanAddress.String())
+				duplicateAddresses = append(duplicateAddresses, DuplicateAddress{
+					TransformedAddress: clanAddress.String(),
+					OriginalAddress: acc.Address,
+					Allocation: clanAlloc.RoundInt(),
+				})
                 continue
             }
+
             claimRecords[i] = claimtypes.ClaimRecord{
                 ClaimAddress: clanAddress.String(),
                 InitialClaimableAmount: sdk.Coins{sdk.Coin{
@@ -142,7 +191,7 @@ func claimRecordsFromSnapshot(snapshot Snapshot, existingAddresses map[string]bo
         }
     }
 
-    return claimRecords
+    return claimRecords, duplicateAddresses
 }
 
 
