@@ -8,3 +8,4 @@ bin/
 
 airdrop-snapshot-*.json
 exchanges-*.json
+exported-claim-*.json
