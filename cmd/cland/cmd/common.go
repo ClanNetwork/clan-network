@@ -31,6 +31,7 @@ type SnapshotAccount struct {
     StakedBalance           sdk.Int `json:"staked_balance"`
     StakedForAirdropBalance sdk.Int `json:"staked_for_airdrop"`
     AirdropOwnershipPercent sdk.Dec `json:"airdrop_ownership_percent"`
+    ClanAllocation 			sdk.Int `json:"allocation"`
 }
 
 type ClaimRecordsExport struct {
