@@ -118,12 +118,12 @@ func claimRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimRecord {
 				panic(err)
 			}
 			claimRecords[i] = claimtypes.ClaimRecord{
-				Address: clanAddress.String(),
+				ClaimAddress: clanAddress.String(),
 				InitialClaimableAmount: sdk.Coins{sdk.Coin{
 					Denom:  DefaultDenom,
 					Amount: clanAlloc.RoundInt(),
 				}},
-				ActionCompleted: []bool{false, false, false, false, false},
+				ActionClaimed: []bool{false, false, false, false, false},
 			}
 
 			i++
