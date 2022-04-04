@@ -29,6 +29,7 @@ func main() {
 	rootCmd.AddCommand(airdrop.SnapshotToClaimRecordsCmd())
 	rootCmd.AddCommand(airdrop.ExportTangoSnapshotCmd())
 	rootCmd.AddCommand(airdrop.SnapshotToClaimEthRecordsCmd())
+	rootCmd.AddCommand(airdrop.PrepareGenesisCmd(app.DefaultNodeHome, app.ModuleBasics))
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}
