@@ -78,9 +78,11 @@ paths:
               claim_record:
                 type: object
                 properties:
-                  address:
+                  claim_address:
                     type: string
                     title: address of claim user
+                  clan_address:
+                    type: string
                   initial_claimable_amount:
                     type: array
                     items:
@@ -99,12 +101,12 @@ paths:
 
                         signatures required by gogoproto.
                     title: total initial claimable amount for the user
-                  action_completed:
+                  action_claimed:
                     type: array
                     items:
                       type: boolean
                     title: |-
-                      true if action is completed
+                      true if action is claimed
                       index of bool in array refers to action enum #
         default:
           description: An unexpected error response.
@@ -28532,9 +28534,11 @@ definitions:
   ClanNetwork.clannetwork.claim.v1beta1.ClaimRecord:
     type: object
     properties:
-      address:
+      claim_address:
         type: string
         title: address of claim user
+      clan_address:
+        type: string
       initial_claimable_amount:
         type: array
         items:
@@ -28550,14 +28554,14 @@ definitions:
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
         title: total initial claimable amount for the user
-      action_completed:
+      action_claimed:
         type: array
         items:
           type: boolean
         title: |-
-          true if action is completed
+          true if action is claimed
           index of bool in array refers to action enum #
-  ClanNetwork.clannetwork.claim.v1beta1.MsgClaimFroEthAddressResponse:
+  ClanNetwork.clannetwork.claim.v1beta1.MsgClaimForEthAddressResponse:
     type: object
     properties:
       claimed_amount:
@@ -28643,9 +28647,11 @@ definitions:
       claim_record:
         type: object
         properties:
-          address:
+          claim_address:
             type: string
             title: address of claim user
+          clan_address:
+            type: string
           initial_claimable_amount:
             type: array
             items:
@@ -28664,12 +28670,12 @@ definitions:
 
                 signatures required by gogoproto.
             title: total initial claimable amount for the user
-          action_completed:
+          action_claimed:
             type: array
             items:
               type: boolean
             title: |-
-              true if action is completed
+              true if action is claimed
               index of bool in array refers to action enum #
   ClanNetwork.clannetwork.claim.v1beta1.QueryClaimableForActionResponse:
     type: object

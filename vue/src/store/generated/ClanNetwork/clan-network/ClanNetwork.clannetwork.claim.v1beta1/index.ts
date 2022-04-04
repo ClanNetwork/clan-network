@@ -1,11 +1,12 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
 
+import { ActionRecord } from "./module/types/clan/claim/v1beta1/action_record"
 import { ClaimEthRecord } from "./module/types/clan/claim/v1beta1/claim_eth_record"
 import { ClaimRecord } from "./module/types/clan/claim/v1beta1/claim_record"
 import { Params } from "./module/types/clan/claim/v1beta1/params"
 
 
-export { ClaimEthRecord, ClaimRecord, Params };
+export { ActionRecord, ClaimEthRecord, ClaimRecord, Params };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -51,6 +52,7 @@ const getDefaultState = () => {
 				ClaimEthRecord: {},
 				
 				_Structure: {
+						ActionRecord: getStructure(ActionRecord.fromPartial({})),
 						ClaimEthRecord: getStructure(ClaimEthRecord.fromPartial({})),
 						ClaimRecord: getStructure(ClaimRecord.fromPartial({})),
 						Params: getStructure(Params.fromPartial({})),
@@ -284,18 +286,18 @@ export default {
 		},
 		
 		
-		async sendMsgClaimFroEthAddress({ rootGetters }, { value, fee = [], memo = '' }) {
+		async sendMsgClaimAddressSigned({ rootGetters }, { value, fee = [], memo = '' }) {
 			try {
 				const txClient=await initTxClient(rootGetters)
-				const msg = await txClient.msgClaimFroEthAddress(value)
+				const msg = await txClient.msgClaimAddressSigned(value)
 				const result = await txClient.signAndBroadcast([msg], {fee: { amount: fee, 
 	gas: "200000" }, memo})
 				return result
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new Error('TxClient:MsgClaimFroEthAddress:Init Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgClaimAddressSigned:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new Error('TxClient:MsgClaimFroEthAddress:Send Could not broadcast Tx: '+ e.message)
+					throw new Error('TxClient:MsgClaimAddressSigned:Send Could not broadcast Tx: '+ e.message)
 				}
 			}
 		},
@@ -314,17 +316,32 @@ export default {
 				}
 			}
 		},
-		
-		async MsgClaimFroEthAddress({ rootGetters }, { value }) {
+		async sendMsgClaimForEthAddress({ rootGetters }, { value, fee = [], memo = '' }) {
 			try {
 				const txClient=await initTxClient(rootGetters)
-				const msg = await txClient.msgClaimFroEthAddress(value)
+				const msg = await txClient.msgClaimForEthAddress(value)
+				const result = await txClient.signAndBroadcast([msg], {fee: { amount: fee, 
+	gas: "200000" }, memo})
+				return result
+			} catch (e) {
+				if (e == MissingWalletError) {
+					throw new Error('TxClient:MsgClaimForEthAddress:Init Could not initialize signing client. Wallet is required.')
+				}else{
+					throw new Error('TxClient:MsgClaimForEthAddress:Send Could not broadcast Tx: '+ e.message)
+				}
+			}
+		},
+		
+		async MsgClaimAddressSigned({ rootGetters }, { value }) {
+			try {
+				const txClient=await initTxClient(rootGetters)
+				const msg = await txClient.msgClaimAddressSigned(value)
 				return msg
 			} catch (e) {
 				if (e == MissingWalletError) {
-					throw new Error('TxClient:MsgClaimFroEthAddress:Init Could not initialize signing client. Wallet is required.')
+					throw new Error('TxClient:MsgClaimAddressSigned:Init Could not initialize signing client. Wallet is required.')
 				}else{
-					throw new Error('TxClient:MsgClaimFroEthAddress:Create Could not create message: ' + e.message)
+					throw new Error('TxClient:MsgClaimAddressSigned:Create Could not create message: ' + e.message)
 				}
 			}
 		},
@@ -338,6 +355,19 @@ export default {
 					throw new Error('TxClient:MsgInitialClaim:Init Could not initialize signing client. Wallet is required.')
 				}else{
 					throw new Error('TxClient:MsgInitialClaim:Create Could not create message: ' + e.message)
+				}
+			}
+		},
+		async MsgClaimForEthAddress({ rootGetters }, { value }) {
+			try {
+				const txClient=await initTxClient(rootGetters)
+				const msg = await txClient.msgClaimForEthAddress(value)
+				return msg
+			} catch (e) {
+				if (e == MissingWalletError) {
+					throw new Error('TxClient:MsgClaimForEthAddress:Init Could not initialize signing client. Wallet is required.')
+				}else{
+					throw new Error('TxClient:MsgClaimForEthAddress:Create Could not create message: ' + e.message)
 				}
 			}
 		},

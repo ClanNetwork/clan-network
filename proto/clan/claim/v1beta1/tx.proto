@@ -12,12 +12,14 @@ option go_package = "github.com/ClanNetwork/clan-network/x/claim/types";
 // Msg defines the Msg service.
 service Msg {
   rpc InitialClaim(MsgInitialClaim) returns (MsgInitialClaimResponse);
-  rpc ClaimFroEthAddress(MsgClaimFroEthAddress) returns (MsgClaimFroEthAddressResponse);
+  rpc ClaimForEthAddress(MsgClaimForEthAddress) returns (MsgClaimForEthAddressResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgInitialClaim {
   string creator = 1;
+  string signed = 2; // the tx containing what is needed to claim - if it is the same as creator there is not need for pubkey / signature
+  string signature = 3;
 }
 
 message MsgInitialClaimResponse {
@@ -28,13 +30,17 @@ message MsgInitialClaimResponse {
   ];
 }
 
-message MsgClaimFroEthAddress {
+message MsgClaimAddressSigned {
+  string value = 1;
+}
+
+message MsgClaimForEthAddress {
   string creator = 1;
   string message = 2;
   string signature = 3;
 }
 
-message MsgClaimFroEthAddressResponse {
+message MsgClaimForEthAddressResponse {
   repeated cosmos.base.v1beta1.Coin claimed_amount = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.nullable) = false,

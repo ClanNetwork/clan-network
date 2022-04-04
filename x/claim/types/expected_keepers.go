@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type AccountKeeper interface {
@@ -19,6 +20,8 @@ type BankKeeper interface {
 
 type StakingKeeper interface {
 	BondDenom(sdk.Context) string
+	GetDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress,
+		maxRetrieve uint16) (delegations []stakingtypes.Delegation)
 }
 
 type DistrKeeper interface {

@@ -4,80 +4,38 @@ import { Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "ClanNetwork.clannetwork.claim.v1beta1";
 
-export enum Action {
-  ActionInitialClaim = 0,
-  ActionVote = 1,
-  ActionDelegateStake = 2,
-  TBD1 = 3,
-  TBD2 = 4,
-  UNRECOGNIZED = -1,
-}
-
-export function actionFromJSON(object: any): Action {
-  switch (object) {
-    case 0:
-    case "ActionInitialClaim":
-      return Action.ActionInitialClaim;
-    case 1:
-    case "ActionVote":
-      return Action.ActionVote;
-    case 2:
-    case "ActionDelegateStake":
-      return Action.ActionDelegateStake;
-    case 3:
-    case "TBD1":
-      return Action.TBD1;
-    case 4:
-    case "TBD2":
-      return Action.TBD2;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return Action.UNRECOGNIZED;
-  }
-}
-
-export function actionToJSON(object: Action): string {
-  switch (object) {
-    case Action.ActionInitialClaim:
-      return "ActionInitialClaim";
-    case Action.ActionVote:
-      return "ActionVote";
-    case Action.ActionDelegateStake:
-      return "ActionDelegateStake";
-    case Action.TBD1:
-      return "TBD1";
-    case Action.TBD2:
-      return "TBD2";
-    default:
-      return "UNKNOWN";
-  }
-}
-
 export interface ClaimRecord {
   /** address of claim user */
-  address: string;
+  claim_address: string;
+  clan_address: string;
   /** total initial claimable amount for the user */
   initial_claimable_amount: Coin[];
   /**
-   * true if action is completed
+   * true if action is claimed
    * index of bool in array refers to action enum #
    */
-  action_completed: boolean[];
+  action_claimed: boolean[];
 }
 
-const baseClaimRecord: object = { address: "", action_completed: false };
+const baseClaimRecord: object = {
+  claim_address: "",
+  clan_address: "",
+  action_claimed: false,
+};
 
 export const ClaimRecord = {
   encode(message: ClaimRecord, writer: Writer = Writer.create()): Writer {
-    if (message.address !== "") {
-      writer.uint32(10).string(message.address);
+    if (message.claim_address !== "") {
+      writer.uint32(10).string(message.claim_address);
+    }
+    if (message.clan_address !== "") {
+      writer.uint32(18).string(message.clan_address);
     }
     for (const v of message.initial_claimable_amount) {
-      Coin.encode(v!, writer.uint32(18).fork()).ldelim();
+      Coin.encode(v!, writer.uint32(26).fork()).ldelim();
     }
-    writer.uint32(26).fork();
-    for (const v of message.action_completed) {
+    writer.uint32(34).fork();
+    for (const v of message.action_claimed) {
       writer.bool(v);
     }
     writer.ldelim();
@@ -89,26 +47,29 @@ export const ClaimRecord = {
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseClaimRecord } as ClaimRecord;
     message.initial_claimable_amount = [];
-    message.action_completed = [];
+    message.action_claimed = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.address = reader.string();
+          message.claim_address = reader.string();
           break;
         case 2:
+          message.clan_address = reader.string();
+          break;
+        case 3:
           message.initial_claimable_amount.push(
             Coin.decode(reader, reader.uint32())
           );
           break;
-        case 3:
+        case 4:
           if ((tag & 7) === 2) {
             const end2 = reader.uint32() + reader.pos;
             while (reader.pos < end2) {
-              message.action_completed.push(reader.bool());
+              message.action_claimed.push(reader.bool());
             }
           } else {
-            message.action_completed.push(reader.bool());
+            message.action_claimed.push(reader.bool());
           }
           break;
         default:
@@ -122,11 +83,16 @@ export const ClaimRecord = {
   fromJSON(object: any): ClaimRecord {
     const message = { ...baseClaimRecord } as ClaimRecord;
     message.initial_claimable_amount = [];
-    message.action_completed = [];
-    if (object.address !== undefined && object.address !== null) {
-      message.address = String(object.address);
+    message.action_claimed = [];
+    if (object.claim_address !== undefined && object.claim_address !== null) {
+      message.claim_address = String(object.claim_address);
     } else {
-      message.address = "";
+      message.claim_address = "";
+    }
+    if (object.clan_address !== undefined && object.clan_address !== null) {
+      message.clan_address = String(object.clan_address);
+    } else {
+      message.clan_address = "";
     }
     if (
       object.initial_claimable_amount !== undefined &&
@@ -136,12 +102,9 @@ export const ClaimRecord = {
         message.initial_claimable_amount.push(Coin.fromJSON(e));
       }
     }
-    if (
-      object.action_completed !== undefined &&
-      object.action_completed !== null
-    ) {
-      for (const e of object.action_completed) {
-        message.action_completed.push(Boolean(e));
+    if (object.action_claimed !== undefined && object.action_claimed !== null) {
+      for (const e of object.action_claimed) {
+        message.action_claimed.push(Boolean(e));
       }
     }
     return message;
@@ -149,7 +112,10 @@ export const ClaimRecord = {
 
   toJSON(message: ClaimRecord): unknown {
     const obj: any = {};
-    message.address !== undefined && (obj.address = message.address);
+    message.claim_address !== undefined &&
+      (obj.claim_address = message.claim_address);
+    message.clan_address !== undefined &&
+      (obj.clan_address = message.clan_address);
     if (message.initial_claimable_amount) {
       obj.initial_claimable_amount = message.initial_claimable_amount.map((e) =>
         e ? Coin.toJSON(e) : undefined
@@ -157,10 +123,10 @@ export const ClaimRecord = {
     } else {
       obj.initial_claimable_amount = [];
     }
-    if (message.action_completed) {
-      obj.action_completed = message.action_completed.map((e) => e);
+    if (message.action_claimed) {
+      obj.action_claimed = message.action_claimed.map((e) => e);
     } else {
-      obj.action_completed = [];
+      obj.action_claimed = [];
     }
     return obj;
   },
@@ -168,11 +134,16 @@ export const ClaimRecord = {
   fromPartial(object: DeepPartial<ClaimRecord>): ClaimRecord {
     const message = { ...baseClaimRecord } as ClaimRecord;
     message.initial_claimable_amount = [];
-    message.action_completed = [];
-    if (object.address !== undefined && object.address !== null) {
-      message.address = object.address;
+    message.action_claimed = [];
+    if (object.claim_address !== undefined && object.claim_address !== null) {
+      message.claim_address = object.claim_address;
     } else {
-      message.address = "";
+      message.claim_address = "";
+    }
+    if (object.clan_address !== undefined && object.clan_address !== null) {
+      message.clan_address = object.clan_address;
+    } else {
+      message.clan_address = "";
     }
     if (
       object.initial_claimable_amount !== undefined &&
@@ -182,12 +153,9 @@ export const ClaimRecord = {
         message.initial_claimable_amount.push(Coin.fromPartial(e));
       }
     }
-    if (
-      object.action_completed !== undefined &&
-      object.action_completed !== null
-    ) {
-      for (const e of object.action_completed) {
-        message.action_completed.push(e);
+    if (object.action_claimed !== undefined && object.action_claimed !== null) {
+      for (const e of object.action_claimed) {
+        message.action_claimed.push(e);
       }
     }
     return message;

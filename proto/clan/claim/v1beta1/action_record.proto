@@ -1,0 +1,32 @@
+syntax = "proto3";
+package ClanNetwork.clannetwork.claim.v1beta1;
+
+option go_package = "github.com/ClanNetwork/clan-network/x/claim/types";
+import "gogoproto/gogo.proto"; 
+
+enum Action {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  ActionInitialClaim = 0;
+  ActionVote = 1;
+  ActionDelegateStake = 2;
+  TBD1 = 3;
+  TBD2 = 4;
+}
+
+message ActionRecord {
+  // address of action user
+  string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+
+  repeated string claim_addresses = 2 [
+    (gogoproto.moretags) = "yaml:\"claim_addresses\"",
+    (gogoproto.nullable) = true
+  ];
+
+  // true if action is completed
+  // index of bool in array refers to action enum #
+  repeated bool action_completed = 3 [
+    (gogoproto.moretags) = "yaml:\"action_completed\"",
+    (gogoproto.nullable) = false
+  ];
+}

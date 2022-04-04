@@ -1,13 +1,13 @@
 /* eslint-disable */
 import {
   Action,
-  ClaimRecord,
   actionFromJSON,
   actionToJSON,
-} from "../../../clan/claim/v1beta1/claim_record";
+} from "../../../clan/claim/v1beta1/action_record";
 import { Reader, Writer } from "protobufjs/minimal";
 import { Coin } from "../../../cosmos/base/v1beta1/coin";
 import { Params } from "../../../clan/claim/v1beta1/params";
+import { ClaimRecord } from "../../../clan/claim/v1beta1/claim_record";
 import { ClaimEthRecord } from "../../../clan/claim/v1beta1/claim_eth_record";
 
 export const protobufPackage = "ClanNetwork.clannetwork.claim.v1beta1";

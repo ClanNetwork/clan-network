@@ -15,6 +15,8 @@ export interface GenesisState {
   params: Params | undefined;
   /** list of claim records, one for every airdrop recipient */
   claim_records: ClaimRecord[];
+  /** list of action records, one for every clan address */
+  action_records: ClaimRecord[];
   /** list of claim records, one for every airdrop recipient */
   claim_eth_records: ClaimEthRecord[];
 }
@@ -35,8 +37,11 @@ export const GenesisState = {
     for (const v of message.claim_records) {
       ClaimRecord.encode(v!, writer.uint32(26).fork()).ldelim();
     }
+    for (const v of message.action_records) {
+      ClaimRecord.encode(v!, writer.uint32(34).fork()).ldelim();
+    }
     for (const v of message.claim_eth_records) {
-      ClaimEthRecord.encode(v!, writer.uint32(34).fork()).ldelim();
+      ClaimEthRecord.encode(v!, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
@@ -46,6 +51,7 @@ export const GenesisState = {
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseGenesisState } as GenesisState;
     message.claim_records = [];
+    message.action_records = [];
     message.claim_eth_records = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -62,6 +68,11 @@ export const GenesisState = {
           );
           break;
         case 4:
+          message.action_records.push(
+            ClaimRecord.decode(reader, reader.uint32())
+          );
+          break;
+        case 5:
           message.claim_eth_records.push(
             ClaimEthRecord.decode(reader, reader.uint32())
           );
@@ -77,6 +88,7 @@ export const GenesisState = {
   fromJSON(object: any): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.claim_records = [];
+    message.action_records = [];
     message.claim_eth_records = [];
     if (
       object.module_account_balance !== undefined &&
@@ -96,6 +108,11 @@ export const GenesisState = {
     if (object.claim_records !== undefined && object.claim_records !== null) {
       for (const e of object.claim_records) {
         message.claim_records.push(ClaimRecord.fromJSON(e));
+      }
+    }
+    if (object.action_records !== undefined && object.action_records !== null) {
+      for (const e of object.action_records) {
+        message.action_records.push(ClaimRecord.fromJSON(e));
       }
     }
     if (
@@ -124,6 +141,13 @@ export const GenesisState = {
     } else {
       obj.claim_records = [];
     }
+    if (message.action_records) {
+      obj.action_records = message.action_records.map((e) =>
+        e ? ClaimRecord.toJSON(e) : undefined
+      );
+    } else {
+      obj.action_records = [];
+    }
     if (message.claim_eth_records) {
       obj.claim_eth_records = message.claim_eth_records.map((e) =>
         e ? ClaimEthRecord.toJSON(e) : undefined
@@ -137,6 +161,7 @@ export const GenesisState = {
   fromPartial(object: DeepPartial<GenesisState>): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.claim_records = [];
+    message.action_records = [];
     message.claim_eth_records = [];
     if (
       object.module_account_balance !== undefined &&
@@ -156,6 +181,11 @@ export const GenesisState = {
     if (object.claim_records !== undefined && object.claim_records !== null) {
       for (const e of object.claim_records) {
         message.claim_records.push(ClaimRecord.fromPartial(e));
+      }
+    }
+    if (object.action_records !== undefined && object.action_records !== null) {
+      for (const e of object.action_records) {
+        message.action_records.push(ClaimRecord.fromPartial(e));
       }
     }
     if (

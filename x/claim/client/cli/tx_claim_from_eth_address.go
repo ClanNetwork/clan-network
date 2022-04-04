@@ -12,10 +12,11 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdClaimFroEthAddress() *cobra.Command {
+func CmdClaimForEthAddress() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "claim-from-eth-address [message] [signature]",
+		Use:   "claim-from-eth-address message signature",
 		Short: "Claim From Eth Address",
+		Long:  "Send clan address (message arg) signed by claimable ethereum address (address will be derived from sig)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argMessage := args[0]
@@ -26,7 +27,7 @@ func CmdClaimFroEthAddress() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgClaimFroEthAddress(
+			msg := types.NewMsgClaimForEthAddress(
 				clientCtx.GetFromAddress().String(),
 				argMessage,
 				argSignature,

@@ -10,17 +10,17 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 )
 
-func SimulateMsgClaimFroEthAddress(
+func SimulateMsgClaimForEthAddress(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
 ) simtypes.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		msg := &types.MsgClaimFroEthAddress{}
+		msg := &types.MsgClaimForEthAddress{}
 
-		// TODO: Handling the ClaimFroEthAddress simulation
+		// TODO: Handling the ClaimForEthAddress simulation
 
-		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "ClaimFroEthAddress simulation not implemented"), nil, nil
+		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "ClaimForEthAddress simulation not implemented"), nil, nil
 	}
 }

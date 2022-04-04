@@ -12,13 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func (k msgServer) ClaimFroEthAddress(goCtx context.Context, msg *types.MsgClaimFroEthAddress) (*types.MsgClaimFroEthAddressResponse, error) {
+func (k msgServer) ClaimForEthAddress(goCtx context.Context, msg *types.MsgClaimForEthAddress) (*types.MsgClaimForEthAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	message_data := []byte(msg.Message)
-	signature_data, _ := hexutil.Decode(msg.Signature)
+	messageData := []byte(msg.Message)
+	signatureData, _ := hexutil.Decode(msg.Signature)
 
-	address, err := EcRecover(message_data, signature_data)
+	address, err := EcRecover(messageData, signatureData)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (k msgServer) ClaimFroEthAddress(goCtx context.Context, msg *types.MsgClaim
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 		),
 	)
-	return &types.MsgClaimFroEthAddressResponse{
+	return &types.MsgClaimForEthAddressResponse{
 		ClaimedAmount: coins,
 	}, nil
 }

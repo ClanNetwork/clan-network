@@ -32,9 +32,9 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgClaimFor int = 100
 
-	opWeightMsgClaimFroEthAddress = "op_weight_msg_create_chain"
+	opWeightMsgClaimForEthAddress = "op_weight_msg_create_chain"
 	// TODO: Determine the simulation weight value
-	defaultWeightMsgClaimFroEthAddress int = 100
+	defaultWeightMsgClaimForEthAddress int = 100
 
 	opWeightMsgCreateClaimEthRecord = "op_weight_msg_create_chain"
 	// TODO: Determine the simulation weight value
@@ -105,15 +105,15 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		claimsimulation.SimulateMsgInitialClaim(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
-	var weightMsgClaimFroEthAddress int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgClaimFroEthAddress, &weightMsgClaimFroEthAddress, nil,
+	var weightMsgClaimForEthAddress int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgClaimForEthAddress, &weightMsgClaimForEthAddress, nil,
 		func(_ *rand.Rand) {
-			weightMsgClaimFroEthAddress = defaultWeightMsgClaimFroEthAddress
+			weightMsgClaimForEthAddress = defaultWeightMsgClaimForEthAddress
 		},
 	)
 	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgClaimFroEthAddress,
-		claimsimulation.SimulateMsgClaimFroEthAddress(am.accountKeeper, am.bankKeeper, am.keeper),
+		weightMsgClaimForEthAddress,
+		claimsimulation.SimulateMsgClaimForEthAddress(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
 	// this line is used by starport scaffolding # simapp/module/operation

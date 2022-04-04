@@ -44,14 +44,27 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:                addr1.String(),
+			ClaimAddress:           addr1.String(),
+			ClanAddress:            addr1.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultClaimDenom, 1000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
 		},
 	}
+
+	actionRecords := []types.ActionRecord{
+		{
+			Address:         addr1.String(),
+			ClaimAddresses:  []string{addr1.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
+		},
+	}
+
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
 
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	err = suite.app.ClaimKeeper.SetActionRecords(suite.ctx, actionRecords)
 	suite.Require().NoError(err)
 
 	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
@@ -92,14 +105,27 @@ func (suite *KeeperTestSuite) TestAirdropDisabled() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:                addr1.String(),
+			ClaimAddress:           addr1.String(),
+			ClanAddress:            addr1.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultClaimDenom, 1000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
 		},
 	}
+
+	actionRecords := []types.ActionRecord{
+		{
+			Address:         addr1.String(),
+			ClaimAddresses:  []string{addr1.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
+		},
+	}
+
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
 
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	err = suite.app.ClaimKeeper.SetActionRecords(suite.ctx, actionRecords)
 	suite.Require().NoError(err)
 
 	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
@@ -174,14 +200,27 @@ func (suite *KeeperTestSuite) TestDuplicatedActionNotWithdrawRepeatedly() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:                addr1.String(),
+			ClaimAddress:           addr1.String(),
+			ClanAddress:            addr1.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultClaimDenom, 2000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
 		},
 	}
+
+	actionRecords := []types.ActionRecord{
+		{
+			Address:         addr1.String(),
+			ClaimAddresses:  []string{addr1.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
+		},
+	}
+
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
 
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	err = suite.app.ClaimKeeper.SetActionRecords(suite.ctx, actionRecords)
 	suite.Require().NoError(err)
 
 	coins1, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
@@ -191,7 +230,7 @@ func (suite *KeeperTestSuite) TestDuplicatedActionNotWithdrawRepeatedly() {
 	suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, sdk.ValAddress(addr1))
 	claim, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr1)
 	suite.NoError(err)
-	suite.True(claim.ActionCompleted[types.ActionDelegateStake])
+	suite.True(claim.ActionClaimed[types.ActionDelegateStake])
 
 	claimedCoins := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	suite.Require().Equal(claimedCoins.AmountOf(types.DefaultClaimDenom), claimRecords[0].InitialClaimableAmount.AmountOf(types.DefaultClaimDenom).Quo(sdk.NewInt(5)))
@@ -199,7 +238,7 @@ func (suite *KeeperTestSuite) TestDuplicatedActionNotWithdrawRepeatedly() {
 	suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, sdk.ValAddress(addr1))
 	claim, err = suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr1)
 	suite.NoError(err)
-	suite.True(claim.ActionCompleted[types.ActionDelegateStake])
+	suite.True(claim.ActionClaimed[types.ActionDelegateStake])
 
 	claimedCoins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	suite.Require().Equal(claimedCoins.AmountOf(types.DefaultClaimDenom), claimRecords[0].InitialClaimableAmount.AmountOf(types.DefaultClaimDenom).Quo(sdk.NewInt(5)))
@@ -222,14 +261,26 @@ func (suite *KeeperTestSuite) TestNotRunningGenesisBlock() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:                addr1.String(),
+			ClaimAddress:           addr1.String(),
+			ClanAddress:            addr1.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultClaimDenom, 2000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
+		},
+	}
+
+	actionRecords := []types.ActionRecord{
+		{
+			Address:         addr1.String(),
+			ClaimAddresses:  []string{addr1.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
 		},
 	}
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
 
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	err = suite.app.ClaimKeeper.SetActionRecords(suite.ctx, actionRecords)
 	suite.Require().NoError(err)
 
 	coins1, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
@@ -239,7 +290,7 @@ func (suite *KeeperTestSuite) TestNotRunningGenesisBlock() {
 	suite.app.ClaimKeeper.AfterDelegationModified(suite.ctx, addr1, sdk.ValAddress(addr1))
 	claim, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr1)
 	suite.NoError(err)
-	suite.False(claim.ActionCompleted[types.ActionDelegateStake])
+	suite.False(claim.ActionClaimed[types.ActionDelegateStake])
 
 	coins1, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
 	suite.Require().NoError(err)
@@ -265,14 +316,29 @@ func (suite *KeeperTestSuite) TestDelegationAutoWithdrawAndDelegateMore() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:                addr1.String(),
+			ClaimAddress:           addr1.String(),
+			ClanAddress:            addr1.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
 		},
 		{
-			Address:                addr2.String(),
+			ClaimAddress:           addr2.String(),
+			ClanAddress:            addr2.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
+		},
+	}
+
+	actionRecords := []types.ActionRecord{
+		{
+			Address:         addr1.String(),
+			ClaimAddresses:  []string{addr1.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
+		},
+		{
+			Address:         addr2.String(),
+			ClaimAddresses:  []string{addr2.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
 		},
 	}
 
@@ -280,6 +346,9 @@ func (suite *KeeperTestSuite) TestDelegationAutoWithdrawAndDelegateMore() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr2, nil, 0, 0))
 
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	err = suite.app.ClaimKeeper.SetActionRecords(suite.ctx, actionRecords)
 	suite.Require().NoError(err)
 
 	cr, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr1)
@@ -316,7 +385,7 @@ func (suite *KeeperTestSuite) TestDelegationAutoWithdrawAndDelegateMore() {
 	claimedCoins := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr2)
 	suite.Require().Equal(
 		claimedCoins.AmountOf(sdk.DefaultBondDenom).String(),
-		claimRecords[1].InitialClaimableAmount.AmountOf(sdk.DefaultBondDenom).Quo(sdk.NewInt(int64(len(claimRecords[1].ActionCompleted)))).String())
+		claimRecords[1].InitialClaimableAmount.AmountOf(sdk.DefaultBondDenom).Quo(sdk.NewInt(int64(len(claimRecords[1].ActionClaimed)))).String())
 
 	_, err = suite.app.StakingKeeper.Delegate(suite.ctx, addr2, claimedCoins.AmountOf(sdk.DefaultBondDenom), stakingtypes.Unbonded, validator, true)
 	suite.NoError(err)
@@ -341,14 +410,29 @@ func (suite *KeeperTestSuite) TestEndAirdrop() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:                addr1.String(),
+			ClaimAddress:           addr1.String(),
+			ClanAddress:            addr1.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultClaimDenom, 1000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
 		},
 		{
-			Address:                addr2.String(),
+			ClaimAddress:           addr2.String(),
+			ClanAddress:            addr2.String(),
 			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultClaimDenom, 1000)),
-			ActionCompleted:        []bool{false, false, false, false, false},
+			ActionClaimed:          []bool{false, false, false, false, false},
+		},
+	}
+
+	actionRecords := []types.ActionRecord{
+		{
+			Address:         addr1.String(),
+			ClaimAddresses:  []string{addr1.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
+		},
+		{
+			Address:         addr2.String(),
+			ClaimAddresses:  []string{addr2.String()},
+			ActionCompleted: []bool{false, false, false, false, false},
 		},
 	}
 
@@ -356,6 +440,9 @@ func (suite *KeeperTestSuite) TestEndAirdrop() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr2, nil, 0, 0))
 
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	err = suite.app.ClaimKeeper.SetActionRecords(suite.ctx, actionRecords)
 	suite.Require().NoError(err)
 
 	err = suite.app.ClaimKeeper.EndAirdrop(suite.ctx)
