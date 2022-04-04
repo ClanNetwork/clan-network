@@ -20,8 +20,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgInitialClaim:
 			res, err := msgServer.InitialClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgClaimFroEthAddress:
-			res, err := msgServer.ClaimFroEthAddress(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgClaimForEthAddress:
+			res, err := msgServer.ClaimForEthAddress(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:

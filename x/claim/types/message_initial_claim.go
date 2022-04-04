@@ -9,9 +9,11 @@ const TypeMsgInitialClaim = "initial_claim"
 
 var _ sdk.Msg = &MsgInitialClaim{}
 
-func NewMsgInitialClaim(creator string) *MsgInitialClaim {
+func NewMsgInitialClaim(creator string, signed string, signature string) *MsgInitialClaim {
 	return &MsgInitialClaim{
-		Creator: creator,
+		Creator:   creator,
+		Signed:    signed,
+		Signature: signature,
 	}
 }
 

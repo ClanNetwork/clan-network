@@ -12,18 +12,18 @@ import (
 	"github.com/ClanNetwork/clan-network/x/claim/types"
 )
 
-func createTestClaimRecord(keeper *keeper.Keeper, ctx sdk.Context) types.ClaimRecord {
-	item := types.ClaimRecord{}
-	keeper.SetClaimRecord(ctx, item)
+func createTestActionRecord(keeper *keeper.Keeper, ctx sdk.Context) types.ActionRecord {
+	item := types.ActionRecord{}
+	keeper.SetActionRecord(ctx, item)
 	return item
 }
 
-func TestClaimRecordGet(t *testing.T) {
+func TestActionRecordGet(t *testing.T) {
 	keeper, ctx := keepertest.ClaimKeeper(t)
-	item := createTestClaimRecord(keeper, ctx)
+	item := createTestActionRecord(keeper, ctx)
 
-	addr, _ := sdk.AccAddressFromBech32(item.ClaimAddress)
-	rst, found := keeper.GetClaimRecord(ctx, addr)
+	addr, _ := sdk.AccAddressFromBech32(item.Address)
+	rst, found := keeper.GetActionRecord(ctx, addr)
 	require.True(t, found == nil)
 	require.Equal(t,
 		nullify.Fill(&item),

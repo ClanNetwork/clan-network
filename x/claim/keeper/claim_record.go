@@ -28,7 +28,7 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 		return err
 	}
 
-	addr, err := sdk.AccAddressFromBech32(claimRecord.Address)
+	addr, err := sdk.AccAddressFromBech32(claimRecord.ClaimAddress)
 	if err != nil {
 		return err
 	}

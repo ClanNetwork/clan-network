@@ -30,9 +30,14 @@ message GenesisState {
     (gogoproto.nullable) = false
   ];
 
+  // list of action records, one for every clan address
+  repeated ClaimRecord action_records = 4 [
+    (gogoproto.moretags) = "yaml:\"action_records\"",
+    (gogoproto.nullable) = false
+  ];
 
   // list of claim records, one for every airdrop recipient
-  repeated ClaimEthRecord claim_eth_records = 4 [
+  repeated ClaimEthRecord claim_eth_records = 5 [
     (gogoproto.moretags) = "yaml:\"claim_eth_records\"",
     (gogoproto.nullable) = false
   ];
