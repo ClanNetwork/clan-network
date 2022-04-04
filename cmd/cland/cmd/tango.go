@@ -26,9 +26,14 @@ type TangoHolders struct {
 }
 
 type TangoHolder struct {
-    EthAddress   string `json:"address"`
-    Balance   float64 `json:"total"`
+    EthAddress   	string `json:"address"`
+    Balance   		float64 `json:"total"`
 }
+
+type ClaimEthRecordsExport struct {
+	Records 				[]claimtypes.ClaimEthRecord 	`json:"claim_eth_records"`
+}
+
 
 
 func toChecksumAddress(address string) string {
@@ -199,8 +204,12 @@ func SnapshotToClaimEthRecordsCmd() *cobra.Command {
 				records := claimEthRecordsFromSnapshot(snapshot)
 				claimRecords = append(claimRecords, records...)
 			}
+			
+			claimEthRecordsExport := ClaimEthRecordsExport{
+				Records:claimRecords,
+			}
 
-			claimRecordsJSON, err := json.MarshalIndent(claimRecords, "", "    ")
+			claimRecordsJSON, err := json.MarshalIndent(claimEthRecordsExport, "", "    ")
 			if err != nil {
 				return err
 			}

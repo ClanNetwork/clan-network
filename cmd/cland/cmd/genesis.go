@@ -58,18 +58,18 @@ type GenesisParams struct {
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
     cmd := &cobra.Command{
-        Use:   "prepare-genesis [network] [chainID] [claimEthRecords] [claimRecords] [file]",
+        Use:   "prepare-genesis [network] [chainID] [claimEthRecords] [claimRecords]]",
         Short: "Prepare a genesis file with initial setup",
         Long: `Prepare a genesis file with initial setup.
         Examples include:
             - Setting module initial params
             - Setting denom metadata
         Example:
-            cland prepare-genesis mainnet clan-testnet-1 claim-eth-records.json claim-records.json snapshot.json
+            cland prepare-genesis mainnet clan-testnet-1 claim-eth-records.json claim-records.json
             - Check input genesis:
                 file is at ~/.clan/config/genesis.json
 `,
-        Args: cobra.ExactArgs(5),
+        Args: cobra.ExactArgs(4),
         RunE: func(cmd *cobra.Command, args []string) error {
             clientCtx := client.GetClientContextFromCmd(cmd)
             cdc := clientCtx.Codec
@@ -78,7 +78,7 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
             config := serverCtx.Config
             config.SetRoot(clientCtx.HomeDir)
 
-            fmt.Printf("Preparing genesis file...\n")
+         
 
             // read genesis file
             genFile := config.GenesisFile()
@@ -87,23 +87,34 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
                 return fmt.Errorf("failed to unmarshal genesis state: %w", err)
             }
 
-            genesisParams := TestnetGenesisParams()
+            genesisParams := getTestnetGenesisParams()
 
+            // network := args[0]
             chainID := args[1]
-            // claimEthRecordsFile := args[2]
-            // claimRecordsFile := args[3]
 
-            // read snapshot.json and parse into struct
-            snapshotFile, _ := ioutil.ReadFile(args[4])
-            snapshot := Snapshot{}
+            // Read claim eth records
+            claimEthRecordsFile, _ := ioutil.ReadFile(args[2])
+            claimEthRecords := ClaimEthRecordsExport{}
 
-            err = json.Unmarshal(snapshotFile, &snapshot)
+            err = json.Unmarshal(claimEthRecordsFile, &claimEthRecords)
             if err != nil {
                 panic(err)
             }
 
-            // run Prepare Genesis
-            appState, genDoc, err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID, snapshot)
+            // Read claim records
+            claimRecordsFile, _ := ioutil.ReadFile(args[3])
+            claimRecords := ClaimRecordsExport{}
+
+            err = json.Unmarshal(claimRecordsFile, &claimRecords)
+            if err != nil {
+                panic(err)
+            }
+
+         
+            fmt.Printf("Preparing genesis file. got %d claim records and %d claim-eth records\n", len(claimRecords.Records), len(claimEthRecords.Records))
+
+            appState, genDoc, err = prepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID, claimEthRecords.Records, claimRecords.Records)
+
             if err != nil {
                 return fmt.Errorf("failed to prepare genesis: %w", err)
             }
@@ -131,14 +142,14 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
     return cmd
 }
 
-// fill with data
-func PrepareGenesis(
+func prepareGenesis(
     clientCtx client.Context,
     appState map[string]json.RawMessage,
     genDoc *tmtypes.GenesisDoc,
     genesisParams GenesisParams,
     chainID string,
-    snapshot Snapshot,
+    claimEthRecords []claimtypes.ClaimEthRecord,
+    claimRecords []claimtypes.ClaimRecord,
 ) (map[string]json.RawMessage, *tmtypes.GenesisDoc, error) {
     cdc := clientCtx.Codec
 
@@ -198,21 +209,30 @@ func PrepareGenesis(
     bankGenState.DenomMetadata = genesisParams.NativeCoinMetadatas
     balances := bankGenState.Balances
 
-    // // claim module genesis
-    // claimGenState := claimtypes.GetGenesisStateFromAppState(cdc, appState)
-    // claimGenState.Params = genesisParams.ClaimParams
-    // claimRecords := make([]claimtypes.ClaimRecord, 0, len(snapshot.Accounts))
-    // claimsTotal := sdk.ZeroInt()
+    totalAllocatedCosmos:= sdk.ZeroInt()
 
-    // claimGenState.ClaimRecords = claimRecords
-    // claimGenState.ModuleAccountBalance = sdk.NewCoin(BaseCoinUnit, claimsTotal)
-    // claimGenStateBz, err := cdc.MarshalJSON(claimGenState)
-    // if err != nil {
-    //  return nil, nil, fmt.Errorf("failed to marshal claim genesis state: %w", err)
-    // }
-    // appState[claimtypes.ModuleName] = claimGenStateBz
+    for _, record := range claimRecords {
+        totalAllocatedCosmos = totalAllocatedCosmos.Add(record.InitialClaimableAmount.AmountOf(DefaultDenom))
+    }
 
-    // save accounts
+    totalAllocatedEth := sdk.ZeroInt()
+
+    for _, record := range claimEthRecords {
+        totalAllocatedEth = totalAllocatedEth.Add(record.InitialClaimableAmount.AmountOf(DefaultDenom))
+    }
+
+    claimGenState := claimtypes.DefaultGenesis()
+    claimGenState.Params = genesisParams.ClaimParams
+    claimsTotal := totalAllocatedCosmos.Add(totalAllocatedEth)
+    claimGenState.ClaimRecords = claimRecords
+    claimGenState.ClaimEthRecords = claimEthRecords
+    claimGenState.ModuleAccountBalance = sdk.NewCoin(BaseCoinUnit, claimsTotal)
+    claimGenStateBz, err := cdc.MarshalJSON(claimGenState)
+    if err != nil {
+     return nil, nil, fmt.Errorf("failed to marshal claim genesis state: %w", err)
+    }
+    appState[claimtypes.ModuleName] = claimGenStateBz
+
 
     // auth module genesis
     accs = authtypes.SanitizeGenesisAccounts(accs)
@@ -238,7 +258,7 @@ func PrepareGenesis(
     return appState, genDoc, nil
 }
 
-func MainnetGenesisParams() GenesisParams {
+func getMainnetGenesisParams() GenesisParams {
     genParams := GenesisParams{}
 
     genParams.AirdropSupply = sdk.NewInt(334_250_000_000_000)              
@@ -271,47 +291,12 @@ func MainnetGenesisParams() GenesisParams {
     genParams.StakingParams.UnbondingTime = time.Hour * 24 * 7 * 2 // 2 weeks
     genParams.StakingParams.MaxValidators = 100
     genParams.StakingParams.BondDenom = genParams.NativeCoinMetadatas[0].Base
-    // MinCommissionRate is enforced in ante-handler
-
-    genParams.GovParams = govtypes.DefaultParams()
-    genParams.GovParams.DepositParams.MaxDepositPeriod = time.Hour * 24 * 14 // 2 weeks
-    genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
-        genParams.NativeCoinMetadatas[0].Base,
-        sdk.NewInt(1_000_000_000),
-    ))
-    genParams.GovParams.TallyParams.Quorum = sdk.MustNewDecFromStr("0.2") // 20%
-    genParams.GovParams.VotingParams.VotingPeriod = time.Hour * 24 * 3    // 3 days
-
-    genParams.CrisisConstantFee = sdk.NewCoin(
-        genParams.NativeCoinMetadatas[0].Base,
-        sdk.NewInt(100_000_000_000),
-    )
-
-    genParams.SlashingParams = slashingtypes.DefaultParams()
-    genParams.SlashingParams.SignedBlocksWindow = int64(25000)                       // ~41 hr at 6 second blocks
-    genParams.SlashingParams.MinSignedPerWindow = sdk.MustNewDecFromStr("0.05")      // 5% minimum liveness
-    genParams.SlashingParams.DowntimeJailDuration = time.Minute                      // 1 minute jail period
-    genParams.SlashingParams.SlashFractionDoubleSign = sdk.MustNewDecFromStr("0.05") // 5% double sign slashing
-    genParams.SlashingParams.SlashFractionDowntime = sdk.MustNewDecFromStr("0.0001") // 0.01% liveness slashing
-
-    genParams.ClaimParams = claimtypes.Params{
-        AirdropEnabled:     false,
-        AirdropStartTime:   genParams.GenesisTime.Add(time.Hour * 24 * 365), // 1 year (will be changed by gov)
-        DurationUntilDecay: time.Hour * 24 * 120,                            // 120 days = ~4 months
-        DurationOfDecay:    time.Hour * 24 * 120,                            // 120 days = ~4 months
-        ClaimDenom:         genParams.NativeCoinMetadatas[0].Base,
-    }
-
-
-
-
 
     return genParams
 }
 
-func TestnetGenesisParams() GenesisParams {
-    genParams := MainnetGenesisParams()
-
+func getTestnetGenesisParams() GenesisParams {
+    genParams := getMainnetGenesisParams()
 
     genParams.GovParams.DepositParams.MaxDepositPeriod = time.Hour * 24 * 14 // 2 weeks
     genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
@@ -321,6 +306,14 @@ func TestnetGenesisParams() GenesisParams {
 
     genParams.GovParams.TallyParams.Quorum = sdk.MustNewDecFromStr("0.1") // 10%
     genParams.GovParams.VotingParams.VotingPeriod = time.Minute * 15      // 15 min
+
+    genParams.ClaimParams = claimtypes.Params{
+        AirdropEnabled:     true,
+        AirdropStartTime:   genParams.GenesisTime, 
+        DurationUntilDecay: time.Hour * 24 * 120,                        
+        DurationOfDecay:    time.Hour * 24 * 120,                          
+        ClaimDenom:         genParams.NativeCoinMetadatas[0].Base,
+    }
 
     return genParams
 }

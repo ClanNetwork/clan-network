@@ -178,6 +178,7 @@ func exportSnapshotFromGenesisFile(clientCtx client.Context, genesisFile string,
 		curAccountedFor := accountedForBalance(currAccBalance,minStaked, whalecap).ToDec()
 		acc.StakedForAirdropBalance = curAccountedFor.RoundInt()
 		acc.AirdropOwnershipPercent = curAccountedFor.QuoInt(totalAccountedForAmount)
+		acc.ClanAllocation = acc.AirdropOwnershipPercent.MulInt(snapshot.TotalClanAllocation).RoundInt()
 
 		if curAccountedFor.GT(sdk.ZeroDec()) {
 			totalAirdropAccounts = totalAirdropAccounts + 1
