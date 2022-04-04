@@ -4,7 +4,6 @@ package ClanNetwork.clannetwork.claim.v1beta1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
-import "clan/claim/v1beta1/claim_record.proto";
 
 option go_package = "github.com/ClanNetwork/clan-network/x/claim/types";
 

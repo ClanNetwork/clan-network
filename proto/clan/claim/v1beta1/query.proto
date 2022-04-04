@@ -5,6 +5,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "clan/claim/v1beta1/params.proto";
 import "clan/claim/v1beta1/claim_record.proto";
+import "clan/claim/v1beta1/action_record.proto";
 import "clan/claim/v1beta1/claim_eth_record.proto";
 // this line is used by starport scaffolding # 1
 import "cosmos/base/v1beta1/coin.proto";

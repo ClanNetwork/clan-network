@@ -6,28 +6,41 @@ export const protobufPackage = "ClanNetwork.clannetwork.claim.v1beta1";
 
 export interface MsgInitialClaim {
   creator: string;
+  /** the tx containing what is needed to claim - if it is the same as creator there is not need for pubkey / signature */
+  signed: string;
+  signature: string;
 }
 
 export interface MsgInitialClaimResponse {
   claimed_amount: Coin[];
 }
 
-export interface MsgClaimFroEthAddress {
+export interface MsgClaimAddressSigned {
+  value: string;
+}
+
+export interface MsgClaimForEthAddress {
   creator: string;
   message: string;
   signature: string;
 }
 
-export interface MsgClaimFroEthAddressResponse {
+export interface MsgClaimForEthAddressResponse {
   claimed_amount: Coin[];
 }
 
-const baseMsgInitialClaim: object = { creator: "" };
+const baseMsgInitialClaim: object = { creator: "", signed: "", signature: "" };
 
 export const MsgInitialClaim = {
   encode(message: MsgInitialClaim, writer: Writer = Writer.create()): Writer {
     if (message.creator !== "") {
       writer.uint32(10).string(message.creator);
+    }
+    if (message.signed !== "") {
+      writer.uint32(18).string(message.signed);
+    }
+    if (message.signature !== "") {
+      writer.uint32(26).string(message.signature);
     }
     return writer;
   },
@@ -41,6 +54,12 @@ export const MsgInitialClaim = {
       switch (tag >>> 3) {
         case 1:
           message.creator = reader.string();
+          break;
+        case 2:
+          message.signed = reader.string();
+          break;
+        case 3:
+          message.signature = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -57,12 +76,24 @@ export const MsgInitialClaim = {
     } else {
       message.creator = "";
     }
+    if (object.signed !== undefined && object.signed !== null) {
+      message.signed = String(object.signed);
+    } else {
+      message.signed = "";
+    }
+    if (object.signature !== undefined && object.signature !== null) {
+      message.signature = String(object.signature);
+    } else {
+      message.signature = "";
+    }
     return message;
   },
 
   toJSON(message: MsgInitialClaim): unknown {
     const obj: any = {};
     message.creator !== undefined && (obj.creator = message.creator);
+    message.signed !== undefined && (obj.signed = message.signed);
+    message.signature !== undefined && (obj.signature = message.signature);
     return obj;
   },
 
@@ -72,6 +103,16 @@ export const MsgInitialClaim = {
       message.creator = object.creator;
     } else {
       message.creator = "";
+    }
+    if (object.signed !== undefined && object.signed !== null) {
+      message.signed = object.signed;
+    } else {
+      message.signed = "";
+    }
+    if (object.signature !== undefined && object.signature !== null) {
+      message.signature = object.signature;
+    } else {
+      message.signature = "";
     }
     return message;
   },
@@ -152,15 +193,75 @@ export const MsgInitialClaimResponse = {
   },
 };
 
-const baseMsgClaimFroEthAddress: object = {
+const baseMsgClaimAddressSigned: object = { value: "" };
+
+export const MsgClaimAddressSigned = {
+  encode(
+    message: MsgClaimAddressSigned,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgClaimAddressSigned {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgClaimAddressSigned } as MsgClaimAddressSigned;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MsgClaimAddressSigned {
+    const message = { ...baseMsgClaimAddressSigned } as MsgClaimAddressSigned;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = String(object.value);
+    } else {
+      message.value = "";
+    }
+    return message;
+  },
+
+  toJSON(message: MsgClaimAddressSigned): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<MsgClaimAddressSigned>
+  ): MsgClaimAddressSigned {
+    const message = { ...baseMsgClaimAddressSigned } as MsgClaimAddressSigned;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = "";
+    }
+    return message;
+  },
+};
+
+const baseMsgClaimForEthAddress: object = {
   creator: "",
   message: "",
   signature: "",
 };
 
-export const MsgClaimFroEthAddress = {
+export const MsgClaimForEthAddress = {
   encode(
-    message: MsgClaimFroEthAddress,
+    message: MsgClaimForEthAddress,
     writer: Writer = Writer.create()
   ): Writer {
     if (message.creator !== "") {
@@ -175,10 +276,10 @@ export const MsgClaimFroEthAddress = {
     return writer;
   },
 
-  decode(input: Reader | Uint8Array, length?: number): MsgClaimFroEthAddress {
+  decode(input: Reader | Uint8Array, length?: number): MsgClaimForEthAddress {
     const reader = input instanceof Uint8Array ? new Reader(input) : input;
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...baseMsgClaimFroEthAddress } as MsgClaimFroEthAddress;
+    const message = { ...baseMsgClaimForEthAddress } as MsgClaimForEthAddress;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -199,8 +300,8 @@ export const MsgClaimFroEthAddress = {
     return message;
   },
 
-  fromJSON(object: any): MsgClaimFroEthAddress {
-    const message = { ...baseMsgClaimFroEthAddress } as MsgClaimFroEthAddress;
+  fromJSON(object: any): MsgClaimForEthAddress {
+    const message = { ...baseMsgClaimForEthAddress } as MsgClaimForEthAddress;
     if (object.creator !== undefined && object.creator !== null) {
       message.creator = String(object.creator);
     } else {
@@ -219,7 +320,7 @@ export const MsgClaimFroEthAddress = {
     return message;
   },
 
-  toJSON(message: MsgClaimFroEthAddress): unknown {
+  toJSON(message: MsgClaimForEthAddress): unknown {
     const obj: any = {};
     message.creator !== undefined && (obj.creator = message.creator);
     message.message !== undefined && (obj.message = message.message);
@@ -228,9 +329,9 @@ export const MsgClaimFroEthAddress = {
   },
 
   fromPartial(
-    object: DeepPartial<MsgClaimFroEthAddress>
-  ): MsgClaimFroEthAddress {
-    const message = { ...baseMsgClaimFroEthAddress } as MsgClaimFroEthAddress;
+    object: DeepPartial<MsgClaimForEthAddress>
+  ): MsgClaimForEthAddress {
+    const message = { ...baseMsgClaimForEthAddress } as MsgClaimForEthAddress;
     if (object.creator !== undefined && object.creator !== null) {
       message.creator = object.creator;
     } else {
@@ -250,11 +351,11 @@ export const MsgClaimFroEthAddress = {
   },
 };
 
-const baseMsgClaimFroEthAddressResponse: object = {};
+const baseMsgClaimForEthAddressResponse: object = {};
 
-export const MsgClaimFroEthAddressResponse = {
+export const MsgClaimForEthAddressResponse = {
   encode(
-    message: MsgClaimFroEthAddressResponse,
+    message: MsgClaimForEthAddressResponse,
     writer: Writer = Writer.create()
   ): Writer {
     for (const v of message.claimed_amount) {
@@ -266,12 +367,12 @@ export const MsgClaimFroEthAddressResponse = {
   decode(
     input: Reader | Uint8Array,
     length?: number
-  ): MsgClaimFroEthAddressResponse {
+  ): MsgClaimForEthAddressResponse {
     const reader = input instanceof Uint8Array ? new Reader(input) : input;
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
-      ...baseMsgClaimFroEthAddressResponse,
-    } as MsgClaimFroEthAddressResponse;
+      ...baseMsgClaimForEthAddressResponse,
+    } as MsgClaimForEthAddressResponse;
     message.claimed_amount = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
@@ -287,10 +388,10 @@ export const MsgClaimFroEthAddressResponse = {
     return message;
   },
 
-  fromJSON(object: any): MsgClaimFroEthAddressResponse {
+  fromJSON(object: any): MsgClaimForEthAddressResponse {
     const message = {
-      ...baseMsgClaimFroEthAddressResponse,
-    } as MsgClaimFroEthAddressResponse;
+      ...baseMsgClaimForEthAddressResponse,
+    } as MsgClaimForEthAddressResponse;
     message.claimed_amount = [];
     if (object.claimed_amount !== undefined && object.claimed_amount !== null) {
       for (const e of object.claimed_amount) {
@@ -300,7 +401,7 @@ export const MsgClaimFroEthAddressResponse = {
     return message;
   },
 
-  toJSON(message: MsgClaimFroEthAddressResponse): unknown {
+  toJSON(message: MsgClaimForEthAddressResponse): unknown {
     const obj: any = {};
     if (message.claimed_amount) {
       obj.claimed_amount = message.claimed_amount.map((e) =>
@@ -313,11 +414,11 @@ export const MsgClaimFroEthAddressResponse = {
   },
 
   fromPartial(
-    object: DeepPartial<MsgClaimFroEthAddressResponse>
-  ): MsgClaimFroEthAddressResponse {
+    object: DeepPartial<MsgClaimForEthAddressResponse>
+  ): MsgClaimForEthAddressResponse {
     const message = {
-      ...baseMsgClaimFroEthAddressResponse,
-    } as MsgClaimFroEthAddressResponse;
+      ...baseMsgClaimForEthAddressResponse,
+    } as MsgClaimForEthAddressResponse;
     message.claimed_amount = [];
     if (object.claimed_amount !== undefined && object.claimed_amount !== null) {
       for (const e of object.claimed_amount) {
@@ -332,9 +433,9 @@ export const MsgClaimFroEthAddressResponse = {
 export interface Msg {
   InitialClaim(request: MsgInitialClaim): Promise<MsgInitialClaimResponse>;
   /** this line is used by starport scaffolding # proto/tx/rpc */
-  ClaimFroEthAddress(
-    request: MsgClaimFroEthAddress
-  ): Promise<MsgClaimFroEthAddressResponse>;
+  ClaimForEthAddress(
+    request: MsgClaimForEthAddress
+  ): Promise<MsgClaimForEthAddressResponse>;
 }
 
 export class MsgClientImpl implements Msg {
@@ -354,17 +455,17 @@ export class MsgClientImpl implements Msg {
     );
   }
 
-  ClaimFroEthAddress(
-    request: MsgClaimFroEthAddress
-  ): Promise<MsgClaimFroEthAddressResponse> {
-    const data = MsgClaimFroEthAddress.encode(request).finish();
+  ClaimForEthAddress(
+    request: MsgClaimForEthAddress
+  ): Promise<MsgClaimForEthAddressResponse> {
+    const data = MsgClaimForEthAddress.encode(request).finish();
     const promise = this.rpc.request(
       "ClanNetwork.clannetwork.claim.v1beta1.Msg",
-      "ClaimFroEthAddress",
+      "ClaimForEthAddress",
       data
     );
     return promise.then((data) =>
-      MsgClaimFroEthAddressResponse.decode(new Reader(data))
+      MsgClaimForEthAddressResponse.decode(new Reader(data))
     );
   }
 }

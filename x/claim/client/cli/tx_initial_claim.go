@@ -14,11 +14,13 @@ var _ = strconv.Itoa(0)
 
 func CmdInitialClaim() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "initial-claim",
+		Use:   "initial-claim [tx]",
 		Short: "Claim Initial Amount",
-		Args:  cobra.ExactArgs(1),
+		Long:  "Send a signed clan address (tx arg) by base64 tx (can be from other networks like Secret and Terra), if there is no tx the creator address will claim for itself",
+		Args:  cobra.MaximumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-
+			argSigned := args[0]
+			argSignature := args[1]
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -26,6 +28,8 @@ func CmdInitialClaim() *cobra.Command {
 
 			msg := types.NewMsgInitialClaim(
 				clientCtx.GetFromAddress().String(),
+				argSigned,
+				argSignature,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -35,9 +35,10 @@ export interface V1Beta1ClaimEthRecord {
 }
 
 export interface V1Beta1ClaimRecord {
-  address?: string;
+  claim_address?: string;
+  clan_address?: string;
   initial_claimable_amount?: V1Beta1Coin[];
-  action_completed?: boolean[];
+  action_claimed?: boolean[];
 }
 
 /**
@@ -51,7 +52,7 @@ export interface V1Beta1Coin {
   amount?: string;
 }
 
-export interface V1Beta1MsgClaimFroEthAddressResponse {
+export interface V1Beta1MsgClaimForEthAddressResponse {
   claimed_amount?: V1Beta1Coin[];
 }
 
@@ -296,7 +297,7 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title clan/claim/v1beta1/claim_eth_record.proto
+ * @title clan/claim/v1beta1/action_record.proto
  * @version version not set
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {

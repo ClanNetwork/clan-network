@@ -23,5 +23,6 @@ func KeyPrefix(p string) []byte {
 
 const (
 	ClaimRecordKey    = "ClaimRecord-value-"
+	ActionRecordKey   = "ActionRecord-value-"
 	ClaimEthRecordKey = "ClaimEthRecord-value-"
 )

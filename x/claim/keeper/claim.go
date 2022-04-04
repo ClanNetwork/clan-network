@@ -24,12 +24,12 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 		return nil, err
 	}
 
-	if claimRecord.Address == "" {
+	if claimRecord.ClanAddress == "" {
 		return sdk.Coins{}, nil
 	}
 
 	// if action already completed, nothing is claimable
-	if claimRecord.ActionCompleted[action] {
+	if claimRecord.ActionClaimed[action] {
 		return sdk.Coins{}, nil
 	}
 
@@ -81,7 +81,7 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress) (sdk
 	if err != nil {
 		return sdk.Coins{}, err
 	}
-	if claimRecord.Address == "" {
+	if claimRecord.ClaimAddress == "" {
 		return sdk.Coins{}, nil
 	}
 
@@ -97,12 +97,63 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress) (sdk
 	return totalClaimable, nil
 }
 
-// ClaimCoins remove claimable amount entry and transfer it to user's account
-func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error) {
+// SetActionCompleted update addr record that action completed and transfer all exisiting claim records
+func (k Keeper) SetActionCompleted(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error) {
 	params := k.GetParams(ctx)
 	if !params.IsAirdropEnabled(ctx.BlockTime()) {
 		return sdk.Coins{}, nil
 	}
+	actionRecord, err := k.GetActionRecord(ctx, addr)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	if len(actionRecord.ActionCompleted) == 0 {
+		actionRecord.ActionCompleted = []bool{false, false, false, false, false}
+	}
+
+	if actionRecord.ActionCompleted[action] {
+		return sdk.Coins{}, nil
+	}
+
+	if actionRecord.Address == "" {
+		actionRecord.Address = addr.String()
+	}
+
+	actionRecord.ActionCompleted[action] = true
+
+	err = k.SetActionRecord(ctx, actionRecord)
+	if err != nil {
+		return nil, err
+	}
+
+	claimableCoins := sdk.Coins{}
+	for _, claimAddrStr := range actionRecord.ClaimAddresses {
+		claimAddr, _ := sdk.AccAddressFromBech32(claimAddrStr)
+		claimRecord, err := k.GetClaimRecord(ctx, claimAddr)
+		if err == nil && claimRecord.ClaimAddress != "" {
+			clamied, _ := k.ClaimCoinsForAction(ctx, claimAddr, addr, action)
+			claimableCoins = claimableCoins.Add(clamied...)
+		}
+	}
+
+	return claimableCoins, nil
+}
+
+// ClaimCoins remove claimable amount entry and transfer it to user's account
+func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, clanAddr sdk.AccAddress, action types.Action) (sdk.Coins, error) {
+	params := k.GetParams(ctx)
+	if !params.IsAirdropEnabled(ctx.BlockTime()) {
+		return sdk.Coins{}, nil
+	}
+	actionRecord, err := k.GetActionRecord(ctx, clanAddr)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+	if !actionRecord.ActionCompleted[action] {
+		return sdk.Coins{}, nil
+	}
+
 	claimableAmount, err := k.GetClaimableAmountForAction(ctx, addr, action)
 	if err != nil {
 		return claimableAmount, err
@@ -117,12 +168,12 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, clanAddr, claimableAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	claimRecord.ActionCompleted[action] = true
+	claimRecord.ActionClaimed[action] = true
 
 	err = k.SetClaimRecord(ctx, claimRecord)
 	if err != nil {
@@ -140,6 +191,78 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	return claimableAmount, nil
 }
 
+// InitClaimCoinsForAllAction remove claimable amount entry and transfer it to user's account for all completed actions
+func (k Keeper) InitClaimCoinsForAllAction(ctx sdk.Context, addr sdk.AccAddress, clanAddr sdk.AccAddress) (sdk.Coins, error) {
+	params := k.GetParams(ctx)
+	if !params.IsAirdropEnabled(ctx.BlockTime()) {
+		return sdk.Coins{}, nil
+	}
+	claimRecord, err := k.GetClaimRecord(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+
+	// claim doesn't exsits or already initilized
+	if claimRecord.ClaimAddress == "" || claimRecord.ClanAddress != "" {
+		return sdk.Coins{}, err
+	}
+
+	claimRecord.ClanAddress = clanAddr.String()
+
+	err = k.SetClaimRecord(ctx, claimRecord)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	actionRecord, err := k.GetActionRecord(ctx, clanAddr)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	if actionRecord.Address == "" {
+		actionRecord.Address = clanAddr.String()
+	}
+
+	actionRecord.ClaimAddresses = append(actionRecord.ClaimAddresses, addr.String())
+
+	if len(actionRecord.ActionCompleted) == 0 {
+		actionRecord.ActionCompleted = []bool{false, false, false, false, false}
+	}
+
+	actionRecord.ActionCompleted[types.ActionInitialClaim] = true
+
+	err = k.SetActionRecord(ctx, actionRecord)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	claimableCoins := sdk.Coins{}
+	for _, action := range types.Action_value {
+		if actionRecord.ActionCompleted[action] && !claimRecord.ActionClaimed[action] {
+			clamied, _ := k.ClaimCoinsForAction(ctx, addr, clanAddr, types.Action(action))
+			claimableCoins = claimableCoins.Add(clamied...)
+		}
+	}
+
+	if err != nil {
+		return claimableCoins, err
+	}
+
+	if claimableCoins.Empty() {
+		return claimableCoins, nil
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeClaim,
+			sdk.NewAttribute(sdk.AttributeKeySender, addr.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, claimableCoins.String()),
+		),
+	})
+
+	return claimableCoins, nil
+}
+
 // FundRemainingsToCommunity fund remainings to the community when airdrop period end
 func (k Keeper) fundRemainingsToCommunity(ctx sdk.Context) error {
 	moduleAccAddr := k.GetModuleAccountAddress(ctx)
@@ -153,6 +276,7 @@ func (k Keeper) EndAirdrop(ctx sdk.Context) error {
 		return err
 	}
 	k.clearInitialClaimables(ctx)
+	k.clearActionRecords(ctx)
 	k.clearEthInitialClaimables(ctx)
 	return nil
 }
@@ -161,6 +285,17 @@ func (k Keeper) EndAirdrop(ctx sdk.Context) error {
 func (k Keeper) clearInitialClaimables(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(types.ClaimRecordKey))
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		key := iterator.Key()
+		store.Delete(key)
+	}
+}
+
+// ClearClaimables clear claimable amounts
+func (k Keeper) clearActionRecords(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(types.ActionRecordKey))
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()

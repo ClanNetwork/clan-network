@@ -5,27 +5,27 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgClaimFroEthAddress = "claim_from_eth_address"
+const TypeMsgClaimForEthAddress = "claim_from_eth_address"
 
-var _ sdk.Msg = &MsgClaimFroEthAddress{}
+var _ sdk.Msg = &MsgClaimForEthAddress{}
 
-func NewMsgClaimFroEthAddress(creator string, message string, signature string) *MsgClaimFroEthAddress {
-	return &MsgClaimFroEthAddress{
+func NewMsgClaimForEthAddress(creator string, message string, signature string) *MsgClaimForEthAddress {
+	return &MsgClaimForEthAddress{
 		Creator:   creator,
 		Message:   message,
 		Signature: signature,
 	}
 }
 
-func (msg *MsgClaimFroEthAddress) Route() string {
+func (msg *MsgClaimForEthAddress) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgClaimFroEthAddress) Type() string {
-	return TypeMsgClaimFroEthAddress
+func (msg *MsgClaimForEthAddress) Type() string {
+	return TypeMsgClaimForEthAddress
 }
 
-func (msg *MsgClaimFroEthAddress) GetSigners() []sdk.AccAddress {
+func (msg *MsgClaimForEthAddress) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -33,12 +33,12 @@ func (msg *MsgClaimFroEthAddress) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgClaimFroEthAddress) GetSignBytes() []byte {
+func (msg *MsgClaimForEthAddress) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgClaimFroEthAddress) ValidateBasic() error {
+func (msg *MsgClaimForEthAddress) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
