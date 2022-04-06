@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -94,26 +95,42 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
 
             // Read claim eth records
             claimEthRecordsFile, _ := ioutil.ReadFile(args[2])
-            claimEthRecords := ClaimEthRecordsExport{}
+            claimEthRecordsExport := ClaimEthRecordsExport{}
+            var claimEthRecords []claimtypes.ClaimEthRecord
 
-            err = json.Unmarshal(claimEthRecordsFile, &claimEthRecords)
+            err = json.Unmarshal(claimEthRecordsFile, &claimEthRecordsExport)
             if err != nil {
                 panic(err)
+            }
+
+            for _, record := range claimEthRecordsExport.Records {
+                _, err := hexutil.Decode(record.Address)
+                if err != nil {
+                    fmt.Printf("Error decoding eth address %s\n", record.Address)
+                } else {
+                    claimEthRecords = append(claimEthRecords, record)
+                }
             }
 
             // Read claim records
             claimRecordsFile, _ := ioutil.ReadFile(args[3])
-            claimRecords := ClaimRecordsExport{}
+            claimRecordsExport := ClaimRecordsExport{}
+            var claimRecords []claimtypes.ClaimRecord
 
-            err = json.Unmarshal(claimRecordsFile, &claimRecords)
+            err = json.Unmarshal(claimRecordsFile, &claimRecordsExport)
             if err != nil {
                 panic(err)
             }
 
-         
-            fmt.Printf("Preparing genesis file. got %d claim records and %d claim-eth records\n", len(claimRecords.Records), len(claimEthRecords.Records))
+            for _, record := range claimRecordsExport.Records {
+                if len(record.ClaimAddress) > 0 {
+                    claimRecords = append(claimRecords, record)
+                } 
+            }
 
-            appState, genDoc, err = prepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID, claimEthRecords.Records, claimRecords.Records)
+            fmt.Printf("Preparing genesis file. got %d claim records and %d claim-eth records\n", len(claimRecords), len(claimEthRecords))
+
+            appState, genDoc, err = prepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID, claimEthRecords, claimRecords)
 
             if err != nil {
                 return fmt.Errorf("failed to prepare genesis: %w", err)
