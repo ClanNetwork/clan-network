@@ -2,8 +2,9 @@ package keeper_test
 
 import (
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 
-	"github.com/tendermint/spm/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -51,7 +52,7 @@ func setup(isCheckTx bool) *clanapp.App {
 func genApp(withGenesis bool, invCheckPeriod uint) (*clanapp.App, clanapp.GenesisState) {
 	db := dbm.NewMemDB()
 	encCdc := cosmoscmd.MakeEncodingConfig(clanapp.ModuleBasics)
-	app := clanapp.Newclanapp(
+	app := clanapp.New(
 		log.NewNopLogger(),
 		db,
 		nil,
@@ -61,8 +62,7 @@ func genApp(withGenesis bool, invCheckPeriod uint) (*clanapp.App, clanapp.Genesi
 		invCheckPeriod,
 		encCdc,
 		simapp.EmptyAppOptions{},
-		nil,
-		wasm.DisableAllProposals,
+		func(*baseapp.BaseApp) {},
 	)
 
 	originalApp := app.(*clanapp.App)
