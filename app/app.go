@@ -6,6 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	allocmodule "github.com/ClanNetwork/clan-network/x/alloc"
+	allocmodulekeeper "github.com/ClanNetwork/clan-network/x/alloc/keeper"
+	allocmoduletypes "github.com/ClanNetwork/clan-network/x/alloc/types"
 	"github.com/ClanNetwork/clan-network/x/mint"
 	mintkeeper "github.com/ClanNetwork/clan-network/x/mint/keeper"
 	minttypes "github.com/ClanNetwork/clan-network/x/mint/types"
@@ -154,6 +157,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		claimmodule.AppModuleBasic{},
+		allocmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -167,6 +171,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		claimmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		allocmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -226,6 +231,7 @@ type App struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	ClaimKeeper claimmodulekeeper.Keeper
+	AllocKeeper allocmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -263,6 +269,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		claimmoduletypes.StoreKey,
+		allocmoduletypes.StoreKey,
 		authzkeeper.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
@@ -387,6 +394,19 @@ func New(
 		),
 	)
 
+	app.AllocKeeper = *allocmodulekeeper.NewKeeper(
+		appCodec,
+		keys[allocmoduletypes.StoreKey],
+		keys[allocmoduletypes.MemStoreKey],
+
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.DistrKeeper,
+		app.GetSubspace(allocmoduletypes.ModuleName),
+	)
+	allocModule := allocmodule.NewAppModule(appCodec, app.AllocKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -427,6 +447,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		claimModule,
+		allocModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -436,6 +457,7 @@ func New(
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName,
+		allocmoduletypes.ModuleName, // must run before distribution begin blocker
 		distrtypes.ModuleName, slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		ibchost.ModuleName, ibctransfertypes.ModuleName,
@@ -452,6 +474,7 @@ func New(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		ibchost.ModuleName, ibctransfertypes.ModuleName,
+		allocmoduletypes.ModuleName,
 		claimmoduletypes.ModuleName,
 	)
 
@@ -478,6 +501,7 @@ func New(
 		authz.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		claimmoduletypes.ModuleName,
+		allocmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -689,6 +713,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(claimmoduletypes.ModuleName)
+	paramsKeeper.Subspace(allocmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
