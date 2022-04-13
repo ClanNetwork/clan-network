@@ -16,8 +16,8 @@ func CmdInitialClaim() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "initial-claim [tx]",
 		Short: "Claim Initial Amount",
-		Long:  "Send a signed clan address (tx arg) by base64 tx (can be from other networks like Secret and Terra), if there is no tx the creator address will claim for itself",
-		Args:  cobra.MaximumNArgs(2),
+		Long:  "Send a signed clan address message and singature (can be from other networks like Secret and Terra)",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argSigned := args[0]
 			argSignature := args[1]

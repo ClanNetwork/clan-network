@@ -13,68 +13,57 @@ import (
 func (k msgServer) InitialClaim(goCtx context.Context, msg *types.MsgInitialClaim) (*types.MsgInitialClaimResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, err
+	if msg.Signature == "" || msg.Signed == "" {
+		return nil, types.ErrInvalidInitialClaimRequest
 	}
 
-	valid := true
-	addr := creator
-	clanAddr := creator
+	txBytes := []byte(msg.Signed)
+	sigBytes := []byte(msg.Signature)
 
-	if msg.Signature != "" && msg.Signed != "" {
+	stdSignDoc := legacytx.StdSignDoc{}
+	stdSignature := legacytx.StdSignature{}
 
-		txBytes := []byte(msg.Signed)
-		sigBytes := []byte(msg.Signature)
+	legacy.Cdc.UnmarshalJSON(txBytes, &stdSignDoc)
+	legacy.Cdc.UnmarshalJSON(sigBytes, &stdSignature)
 
-		stdSignDoc := legacytx.StdSignDoc{}
-		stdSignature := legacytx.StdSignature{}
+	stdFee := legacytx.StdFee{}
+	legacy.Cdc.UnmarshalJSON(stdSignDoc.Fee, &stdFee)
 
-		legacy.Cdc.UnmarshalJSON(txBytes, &stdSignDoc)
-		legacy.Cdc.UnmarshalJSON(sigBytes, &stdSignature)
+	msgClan := types.MsgClaimAddressSigned{}
+	types.Amino.UnmarshalJSON(stdSignDoc.Msgs[0], &msgClan)
+	msgs := []sdk.Msg{&msgClan}
 
-		stdFee := legacytx.StdFee{}
-		legacy.Cdc.UnmarshalJSON(stdSignDoc.Fee, &stdFee)
+	clanAddr, err := sdk.AccAddressFromBech32(msgClan.Value)
 
-		msgClan := types.MsgClaimAddressSigned{}
-		types.Amino.UnmarshalJSON(stdSignDoc.Msgs[0], &msgClan)
-		msgs := []sdk.Msg{&msgClan}
+	if err != nil {
+		return nil, types.ErrInvalidClaimAddress
+	}
 
-		clanAddr, err = sdk.AccAddressFromBech32(msgClan.Value)
+	signed := legacytx.StdSignBytes(stdSignDoc.ChainID, stdSignDoc.AccountNumber, stdSignDoc.Sequence, stdSignDoc.TimeoutHeight, stdFee, msgs, stdSignDoc.Memo)
 
-		if err != nil {
-			return nil, types.ErrInvalidClaimAddress
+	valid := stdSignature.VerifySignature(signed, stdSignature.GetSignature())
+
+	if valid {
+		addr := sdk.AccAddress(stdSignature.Address())
+
+		params := k.GetParams(ctx)
+		if !params.IsAirdropEnabled(ctx.BlockTime()) {
+			return nil, types.ErrAirdropNotEnabled
 		}
-
-		signed := legacytx.StdSignBytes(stdSignDoc.ChainID, stdSignDoc.AccountNumber, stdSignDoc.Sequence, stdSignDoc.TimeoutHeight, stdFee, msgs, stdSignDoc.Memo)
-
-		valid = stdSignature.VerifySignature(signed, stdSignature.GetSignature())
-
-		addr = sdk.AccAddress(stdSignature.Address())
-
-		addr = sdk.AccAddress(stdSignature.Address())
+		coins, err := k.Keeper.InitClaimCoinsForAllAction(ctx, addr, clanAddr)
+		if err != nil {
+			return nil, err
+		}
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeySender, msg.Creator),
+			),
+		)
+		return &types.MsgInitialClaimResponse{
+			ClaimedAmount: coins,
+		}, nil
 	}
-
-	if !valid {
-		return nil, types.ErrUnauthorizedClaimer
-	}
-
-	params := k.GetParams(ctx)
-	if !params.IsAirdropEnabled(ctx.BlockTime()) {
-		return nil, types.ErrAirdropNotEnabled
-	}
-	coins, err := k.Keeper.InitClaimCoinsForAllAction(ctx, addr, clanAddr)
-	if err != nil {
-		return nil, err
-	}
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Creator),
-		),
-	)
-	return &types.MsgInitialClaimResponse{
-		ClaimedAmount: coins,
-	}, nil
+	return nil, types.ErrUnauthorizedClaimer
 }
