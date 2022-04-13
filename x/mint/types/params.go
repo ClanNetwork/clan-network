@@ -3,10 +3,11 @@ package types
 import (
 	"errors"
 	"fmt"
+	"github.com/ClanNetwork/clan-network/cmd/cland/cmd"
 	"strings"
-	time "time"
+	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -42,11 +43,11 @@ func NewParams(
 // default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		MintDenom:               sdk.DefaultBondDenom,
-		StartTime:               time.Now().AddDate(1, 0, 0),       // 1 year from now
-		InitialAnnualProvisions: sdk.NewDec(1_000_000_000_000_000), // 1B
-		ReductionFactor:         sdk.NewDec(2).QuoInt64(3),         // 2/3
-		BlocksPerYear:           uint64(6311520),                   // 60 * 60 * 8766 / 5 = 6,311,520
+		MintDenom:               cmd.DefaultDenom,
+		StartTime:               time.Now().AddDate(1, 0, 0),     // 1 year from now
+		InitialAnnualProvisions: sdk.NewDec(334_350_000_000_000), // ~334.4M
+		ReductionFactor:         sdk.NewDec(2).QuoInt64(3),       // 2/3
+		BlocksPerYear:           uint64(6311520),                 // 60 * 60 * 365.25 * 24 / 5 = 6,311,520
 		//  assuming 5 second block times
 	}
 }
