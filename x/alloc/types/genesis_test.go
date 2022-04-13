@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
 
 	"github.com/ClanNetwork/clan-network/x/alloc/types"
@@ -8,6 +9,8 @@ import (
 )
 
 func TestGenesisState_Validate(t *testing.T) {
+	sdk.GetConfig().SetBech32PrefixForAccount("clan", "clanpub")
+
 	for _, tc := range []struct {
 		desc     string
 		genState *types.GenesisState

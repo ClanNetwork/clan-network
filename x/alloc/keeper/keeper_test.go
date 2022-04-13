@@ -22,8 +22,9 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
+	sdk.GetConfig().SetBech32PrefixForAccount("clan", "clanpub")
 	suite.app = simapp.New(suite.T().TempDir())
-	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: time.Now().UTC()})
+	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "clan-1", Time: time.Now().UTC()})
 	suite.app.AllocKeeper.SetParams(suite.ctx, types.DefaultParams())
 
 }
@@ -52,16 +53,12 @@ func (suite *KeeperTestSuite) TestDistribution() {
 	denom := suite.app.StakingKeeper.BondDenom(suite.ctx)
 	allocKeeper := suite.app.AllocKeeper
 	params := suite.app.AllocKeeper.GetParams(suite.ctx)
-	devRewardsReceiver := sdk.AccAddress([]byte("addr1---------------"))
-	params.DistributionProportions.NftIncentives = sdk.NewDecWithPrec(45, 2)
-	params.DistributionProportions.DeveloperRewards = sdk.NewDecWithPrec(15, 2)
-	params.WeightedDeveloperRewardsReceivers = []types.WeightedAddress{
-		{
-			Address: devRewardsReceiver.String(),
-			Weight:  sdk.NewDec(1),
-		},
-	}
-	suite.app.AllocKeeper.SetParams(suite.ctx, params)
+
+	coreDevReceiver, err := sdk.AccAddressFromHex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	suite.Require().Nil(err)
+
+	DaoReceiver, err := sdk.AccAddressFromHex("0000000000000000000000000000000000000000")
+	suite.Require().Nil(err)
 
 	feePool := suite.app.DistrKeeper.GetFeePool(suite.ctx)
 	feeCollector := suite.app.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
@@ -91,8 +88,8 @@ func (suite *KeeperTestSuite) TestDistribution() {
 	allocKeeper.DistributeInflation(suite.ctx)
 
 	feeCollector = suite.app.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
-	modulePortion := params.DistributionProportions.NftIncentives.
-		Add(params.DistributionProportions.DeveloperRewards) // 60%
+	modulePortion := params.DistributionProportions.CoreDev.Weight.
+		Add(params.DistributionProportions.Dao.Weight)
 
 	// remaining going to next module should be 100% - 60% = 40%
 	suite.Equal(
@@ -100,12 +97,10 @@ func (suite *KeeperTestSuite) TestDistribution() {
 		suite.app.BankKeeper.GetAllBalances(suite.ctx, feeCollector).AmountOf(denom).String())
 
 	suite.Equal(
-		mintCoin.Amount.ToDec().Mul(params.DistributionProportions.DeveloperRewards).TruncateInt(),
-		suite.app.BankKeeper.GetBalance(suite.ctx, devRewardsReceiver, denom).Amount)
+		mintCoin.Amount.ToDec().Mul(params.DistributionProportions.CoreDev.Weight).TruncateInt(),
+		suite.app.BankKeeper.GetBalance(suite.ctx, coreDevReceiver, denom).Amount)
 
-	// since the NFT incentives are not setup yet, funds go into the communtiy pool
-	feePool = suite.app.DistrKeeper.GetFeePool(suite.ctx)
 	suite.Equal(
-		mintCoin.Amount.ToDec().Mul(params.DistributionProportions.NftIncentives),
-		feePool.CommunityPool.AmountOf(denom))
+		mintCoin.Amount.ToDec().Mul(params.DistributionProportions.Dao.Weight).TruncateInt(),
+		suite.app.BankKeeper.GetBalance(suite.ctx, DaoReceiver, denom).Amount)
 }
