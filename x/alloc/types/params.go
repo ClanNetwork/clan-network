@@ -30,8 +30,8 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		DistributionProportions: DistributionProportions{
-			CoreDev: WeightedAddress{Address: "", Weight: sdk.NewDecWithPrec(25, 2)}, // 25%
-			Dao:     WeightedAddress{Address: "", Weight: sdk.NewDecWithPrec(40, 2)}, // 40%
+			CoreDev: WeightedAddress{Address: "clan1llllllllllllllllllllllllllllllllq34zf2", Weight: sdk.NewDecWithPrec(25, 2)}, // 25%
+			Dao:     WeightedAddress{Address: "clan1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvq5dwq", Weight: sdk.NewDecWithPrec(40, 2)}, // 40%
 		},
 	}
 }
@@ -56,12 +56,12 @@ func validateDistributionProportions(i interface{}) error {
 
 	_, err := sdk.AccAddressFromBech32(v.CoreDev.Address)
 	if err != nil {
-		return fmt.Errorf("invalid Core Dev address: %s", v.CoreDev.Address)
+		return fmt.Errorf("invalid Core Dev address: \"%s\": %e", v.CoreDev.Address, err)
 	}
 
 	_, err = sdk.AccAddressFromBech32(v.Dao.Address)
 	if err != nil {
-		return fmt.Errorf("invalid DAO address: %s", v.Dao.Address)
+		return fmt.Errorf("invalid DAO address: \"%s\": %e", v.Dao.Address, err)
 	}
 
 	totalProportions := v.CoreDev.Weight.Add(v.Dao.Weight)
