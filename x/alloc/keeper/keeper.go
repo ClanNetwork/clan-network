@@ -69,37 +69,31 @@ func (k Keeper) DistributeInflation(ctx sdk.Context) error {
 	params := k.GetParams(ctx)
 	proportions := params.DistributionProportions
 
-	nftIncentiveAmount := blockInflationDec.Mul(proportions.NftIncentives)
-	nftIncentiveCoin := sdk.NewCoin(k.stakingKeeper.BondDenom(ctx), nftIncentiveAmount.TruncateInt())
-	// Distribute NFT incentives to the community pool until a future update
-	err := k.distrKeeper.FundCommunityPool(ctx, sdk.NewCoins(nftIncentiveCoin), blockInflationAddr)
+	err := k.FundWeightedAddress(ctx, proportions.CoreDev, blockInflationDec, blockInflationAddr)
 	if err != nil {
 		return err
 	}
-	k.Logger(ctx).Debug("funded community pool", "amount", nftIncentiveCoin.String(), "from", blockInflationAddr)
-
-	devRewardAmount := blockInflationDec.Mul(proportions.DeveloperRewards)
-	devRewardCoin := sdk.NewCoin(k.stakingKeeper.BondDenom(ctx), devRewardAmount.TruncateInt())
-
-	for _, w := range params.WeightedDeveloperRewardsReceivers {
-		devRewardPortionCoins := sdk.NewCoins(k.GetProportions(ctx, devRewardCoin, w.Weight))
-		if w.Address == "" {
-			err := k.distrKeeper.FundCommunityPool(ctx, devRewardPortionCoins, blockInflationAddr)
-			if err != nil {
-				return err
-			}
-		} else {
-			devRewardsAddr, err := sdk.AccAddressFromBech32(w.Address)
-			if err != nil {
-				return err
-			}
-			err = k.bankKeeper.SendCoins(ctx, blockInflationAddr, devRewardsAddr, devRewardPortionCoins)
-			if err != nil {
-				return err
-			}
-			k.Logger(ctx).Debug("sent coins to developer", "amount", devRewardPortionCoins.String(), "from", blockInflationAddr)
-		}
+	err = k.FundWeightedAddress(ctx, proportions.Dao, blockInflationDec, blockInflationAddr)
+	if err != nil {
+		return err
 	}
+
+	return nil
+}
+
+func (k Keeper) FundWeightedAddress(ctx sdk.Context, weightedAddr types.WeightedAddress, inflation sdk.Dec, inflationAddr sdk.AccAddress) error {
+	amountToFund := inflation.Mul(weightedAddr.Weight)
+	amountToFundCoin := sdk.NewCoin(k.stakingKeeper.BondDenom(ctx), amountToFund.TruncateInt())
+
+	coreDevAddr, err := sdk.AccAddressFromBech32(weightedAddr.Address)
+	if err != nil {
+		return err
+	}
+	err = k.bankKeeper.SendCoins(ctx, inflationAddr, coreDevAddr, sdk.NewCoins(amountToFundCoin))
+	if err != nil {
+		return err
+	}
+	k.Logger(ctx).Debug("sent coins to Core Dev pool", "amount", amountToFundCoin.String(), "from", inflationAddr)
 
 	return nil
 }

@@ -16,14 +16,12 @@ message WeightedAddress {
 }
 
 message DistributionProportions {
-  string nft_incentives = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"nft_incentives\"",
+  WeightedAddress core_dev = 1 [
+    (gogoproto.moretags) = "yaml:\"developer_rewards_receiver\"",
     (gogoproto.nullable) = false
   ];
-  string developer_rewards = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"developer_rewards\"",
+  WeightedAddress dao = 2 [
+    (gogoproto.moretags) = "yaml:\"developer_rewards_receiver\"",
     (gogoproto.nullable) = false
   ];
 }
@@ -32,9 +30,4 @@ message Params {
   // distribution_proportions defines the proportion of the minted denom
   DistributionProportions distribution_proportions = 1
       [ (gogoproto.nullable) = false ];
-  // address to receive developer rewards
-  repeated WeightedAddress weighted_developer_rewards_receivers = 2 [
-    (gogoproto.moretags) = "yaml:\"developer_rewards_receiver\"",
-    (gogoproto.nullable) = false
-  ];
 }
