@@ -1,8 +1,9 @@
 #!/bin/bash
 
 DENOM=uclan
-CHAIN_ID=devnet-1
+CHAIN_ID=testnet-1
 VALIDATOR_INIT_COINS=100000000000000$DENOM
+FAUCET_INIT_COINS=50000000000000$DENOM
 ORACLE_INIT_COINS=1000000$DENOM
 
 rm -rf $HOME/.clan
@@ -15,13 +16,9 @@ cland prepare-genesis testnet $CHAIN_ID exported-claim-eth-records.json  exporte
 cland config chain-id $CHAIN_ID
 cland config keyring-backend test
 cland config output json
-yes | cland keys add validator
-yes | cland keys add claim_oracle
 
-cland add-genesis-account $(cland keys show validator -a) $VALIDATOR_INIT_COINS
-cland add-genesis-account $(cland keys show claim_oracle -a) $VALIDATOR_INIT_COINS
+cland add-genesis-account clan10jq29ktde4xpges8ah0z4r48ywqsj7029u9f5c $VALIDATOR_INIT_COINS
+cland add-genesis-account clan147m4eyj8ejcax2k5a96ag5yxan8884p37qnn9z $ORACLE_INIT_COINS
+cland add-genesis-account clan1anl88fsxy2pucyxdxme8pmpmw779lvhhn0faks $FAUCET_INIT_COINS
 
-cland gentx validator 1000000000000$DENOM --chain-id $CHAIN_ID --keyring-backend test
-cland collect-gentxs
 cland validate-genesis
-cland start

@@ -234,7 +234,7 @@ func claimEthRecordsFromSnapshot(snapshot Snapshot) []claimtypes.ClaimEthRecord 
 			claimRecords[i] = claimtypes.ClaimEthRecord{
 				Address: acc.Address,
 				InitialClaimableAmount: sdk.Coins{sdk.Coin{
-					Denom:  DefaultDenom,
+					Denom:  BaseCoinUnit,
 					Amount: clanAlloc.RoundInt(),
 				}},
 				Completed: false,

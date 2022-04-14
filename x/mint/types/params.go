@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-	"github.com/ClanNetwork/clan-network/cmd/cland/cmd"
 	"strings"
 	"time"
 
@@ -43,7 +42,7 @@ func NewParams(
 // default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		MintDenom:               cmd.DefaultDenom,
+		MintDenom:              "uclan",
 		StartTime:               time.Now(),
 		InitialAnnualProvisions: sdk.NewDec(334_250_000_000_000), // ~334.4M
 		ReductionFactor:         sdk.NewDec(2).QuoInt64(3),       // 2/3

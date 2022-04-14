@@ -93,7 +93,7 @@ func SnapshotToClaimRecordsCmd() *cobra.Command {
 				for i, claimRecord := range claimRecords {
 					if addr == claimRecord.ClaimAddress {
 						claimRecord.InitialClaimableAmount = claimRecord.InitialClaimableAmount.Add(sdk.Coin{
-							Denom:  DefaultDenom,
+							Denom:  BaseCoinUnit,
 							Amount: dup.Allocation,
 						})
 						claimRecords[i] = claimRecord
@@ -104,7 +104,7 @@ func SnapshotToClaimRecordsCmd() *cobra.Command {
 			totalAllocated := sdk.ZeroInt()
 
 			for _, record := range claimRecords {
-				totalAllocated = totalAllocated.Add(record.InitialClaimableAmount.AmountOf(DefaultDenom))
+				totalAllocated = totalAllocated.Add(record.InitialClaimableAmount.AmountOf(BaseCoinUnit))
 			}
 
 			fmt.Printf("Exporting %d claim records...\n", len(claimRecords))
@@ -182,7 +182,7 @@ func claimRecordsFromSnapshot(snapshot Snapshot, existingAddresses map[string]bo
             claimRecords[i] = claimtypes.ClaimRecord{
                 ClaimAddress: clanAddress.String(),
                 InitialClaimableAmount: sdk.Coins{sdk.Coin{
-                    Denom:  DefaultDenom,
+                    Denom:  BaseCoinUnit,
                     Amount: clanAlloc.RoundInt(),
                 }},
                 ActionClaimed: []bool{false, false, false, false, false},

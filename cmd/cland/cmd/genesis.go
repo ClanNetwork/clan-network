@@ -26,7 +26,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	alloctypes "github.com/ClanNetwork/clan-network/x/alloc/types"
 	claimtypes "github.com/ClanNetwork/clan-network/x/claim/types"
+	minttypes "github.com/ClanNetwork/clan-network/x/mint/types"
 )
 
 const (
@@ -55,6 +57,10 @@ type GenesisParams struct {
     SlashingParams slashingtypes.Params
 
     ClaimParams claimtypes.Params
+
+    AllocParams alloctypes.Params
+
+    MintParams minttypes.Params
 }
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -229,13 +235,13 @@ func prepareGenesis(
     totalAllocatedCosmos:= sdk.ZeroInt()
 
     for _, record := range claimRecords {
-        totalAllocatedCosmos = totalAllocatedCosmos.Add(record.InitialClaimableAmount.AmountOf(DefaultDenom))
+        totalAllocatedCosmos = totalAllocatedCosmos.Add(record.InitialClaimableAmount.AmountOf(BaseCoinUnit))
     }
 
     totalAllocatedEth := sdk.ZeroInt()
 
     for _, record := range claimEthRecords {
-        totalAllocatedEth = totalAllocatedEth.Add(record.InitialClaimableAmount.AmountOf(DefaultDenom))
+        totalAllocatedEth = totalAllocatedEth.Add(record.InitialClaimableAmount.AmountOf(BaseCoinUnit))
     }
 
     claimGenState := claimtypes.DefaultGenesis()
@@ -271,6 +277,26 @@ func prepareGenesis(
         return nil, nil, fmt.Errorf("failed to marshal bank genesis state: %w", err)
     }
     appState[banktypes.ModuleName] = bankGenStateBz
+
+    // alloc module genesis
+	allocGenState := alloctypes.GetGenesisStateFromAppState(cdc, appState)
+	allocGenState.Params = genesisParams.AllocParams
+	allocGenStateBz, err := cdc.MarshalJSON(allocGenState)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal alloc genesis state: %w", err)
+	}
+	appState[alloctypes.ModuleName] = allocGenStateBz
+
+
+    // mint module genesis
+	mintGenState := minttypes.DefaultGenesisState()
+	mintGenState.Params = genesisParams.MintParams
+
+	mintGenStateBz, err := cdc.MarshalJSON(mintGenState)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal mint genesis state: %w", err)
+	}
+	appState[minttypes.ModuleName] = mintGenStateBz
 
     return appState, genDoc, nil
 }
@@ -338,6 +364,31 @@ func getTestnetGenesisParams() GenesisParams {
         DurationOfDecay:    time.Hour * 24 * 120,                          
         ClaimDenom:         genParams.NativeCoinMetadatas[0].Base,
     }
+
+    // alloc
+    coreDev := alloctypes.WeightedAddress{
+        Address: "clan1cyk5jz84kmrqle6p0px0fdzu57jfyy5x4p697r",
+        Weight:  sdk.NewDecWithPrec(25, 2),
+    }
+
+    dao := alloctypes.WeightedAddress{
+        Address: "clan10q4cddypjcq5lr4j3dznt0e5krghrpcjzn94xz",
+        Weight:  sdk.NewDecWithPrec(40, 2),
+    }
+
+	genParams.AllocParams = alloctypes.DefaultParams()
+	genParams.AllocParams.DistributionProportions = alloctypes.DistributionProportions{
+		CoreDev:    coreDev, // 25%
+		Dao:        dao, //40% 
+	}
+
+    // mint
+	genParams.MintParams = minttypes.DefaultParams()
+	genParams.MintParams.MintDenom = BaseCoinUnit
+	genParams.MintParams.StartTime = genParams.GenesisTime
+	genParams.MintParams.InitialAnnualProvisions = sdk.NewDec(334_250_000_000_000)
+	genParams.MintParams.ReductionFactor = sdk.NewDec(2).QuoInt64(3)
+	genParams.MintParams.BlocksPerYear = uint64(5737588)
 
     return genParams
 }
