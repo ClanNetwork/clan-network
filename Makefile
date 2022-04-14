@@ -99,3 +99,7 @@ lint:
 
 build-linux:
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build $(BUILD_FLAGS) -o bin/cland github.com/ClanNetwork/clan-network/cmd/cland
+
+proto-gen:
+	starport generate proto-go
+	go mod tidy
