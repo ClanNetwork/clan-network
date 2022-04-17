@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DENOM=uclan
-CHAIN_ID=testnet-1
+CHAIN_ID=gamecube-1
 VALIDATOR_INIT_COINS=100000000000000$DENOM
 FAUCET_INIT_COINS=50000000000000$DENOM
 ORACLE_INIT_COINS=1000000$DENOM
@@ -21,4 +21,10 @@ cland add-genesis-account clan10jq29ktde4xpges8ah0z4r48ywqsj7029u9f5c $VALIDATOR
 cland add-genesis-account clan147m4eyj8ejcax2k5a96ag5yxan8884p37qnn9z $ORACLE_INIT_COINS
 cland add-genesis-account clan1anl88fsxy2pucyxdxme8pmpmw779lvhhn0faks $FAUCET_INIT_COINS
 
+cland keys add my-validator --keyring-backend test --recover
+cland gentx my-validator 95000000000000uclan --chain-id $CHAIN_ID --keyring-backend test
+
+cland collect-gentxs
 cland validate-genesis
+cland start
+
