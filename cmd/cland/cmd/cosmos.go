@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	DefaultDenom = "uclan"
 	flagWhalecap = "whalecap"
 	flagMinStaked = "minStaked"
 )
