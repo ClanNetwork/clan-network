@@ -94,8 +94,13 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
                 return fmt.Errorf("failed to unmarshal genesis state: %w", err)
             }
 
-            genesisParams := getTestnetGenesisParams()
-
+            // get genesis params
+			genesisParams := getMainnetGenesisParams()
+			switch args[0] {
+			case "testnet":
+				genesisParams = getTestnetGenesisParams()
+            }
+		
             // network := args[0]
             chainID := args[1]
 
@@ -347,6 +352,9 @@ func getMainnetGenesisParams() GenesisParams {
 
 func getTestnetGenesisParams() GenesisParams {
     genParams := getMainnetGenesisParams()
+
+    genParams.AirdropSupply = sdk.NewInt(334_250_000_000_000)              
+    genParams.GenesisTime = time.Date(2022, 28, 4, 23, 0, 0, 0, time.UTC) 
 
     genParams.GovParams.DepositParams.MaxDepositPeriod = time.Hour * 24 * 14 // 2 weeks
     genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(

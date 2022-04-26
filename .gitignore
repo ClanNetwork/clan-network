@@ -7,5 +7,7 @@ release/
 bin/
 
 airdrop-snapshot-*.json
+snapshot_*.json.gz
+snapshot_*.json
 exchanges-*.json
 exported-claim-*.json
