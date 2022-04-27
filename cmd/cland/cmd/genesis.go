@@ -39,10 +39,6 @@ const (
     flagCoreDevAddr = "coreDevAddr"
     flagDaoAddr = "daoAddr"
 )
-
-
-
-
 type GenesisParams struct {
     AirdropSupply sdk.Int
 
@@ -389,7 +385,7 @@ func getTestnetGenesisParams() GenesisParams {
     genParams := getMainnetGenesisParams()
 
     genParams.AirdropSupply = sdk.NewInt(334_250_000_000_000)              
-    genParams.GenesisTime = time.Date(2022, 28, 4, 23, 0, 0, 0, time.UTC) 
+    genParams.GenesisTime = time.Date(2022, 4, 28, 17, 0, 0, 0, time.UTC) 
 
     genParams.GovParams.DepositParams.MaxDepositPeriod = time.Hour * 24 * 14 // 2 weeks
     genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
