@@ -36,7 +36,12 @@ const (
     BaseCoinUnit        = "uclan"
     Exponent       = 6
     Bech32PrefixAccAddr = "clan"
+    flagCoreDevAddr = "coreDevAddr"
+    flagDaoAddr = "daoAddr"
 )
+
+
+
 
 type GenesisParams struct {
     AirdropSupply sdk.Int
@@ -65,7 +70,7 @@ type GenesisParams struct {
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
     cmd := &cobra.Command{
-        Use:   "prepare-genesis [network] [chainID] [claimEthRecords] [claimRecords]]",
+        Use:   "prepare-genesis [network] [chainID] [claimEthRecords] [claimRecords] --coreDev=[coreDef] --daoAddr=[daoAddr]",
         Short: "Prepare a genesis file with initial setup",
         Long: `Prepare a genesis file with initial setup.
         Examples include:
@@ -93,6 +98,16 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
             if err != nil {
                 return fmt.Errorf("failed to unmarshal genesis state: %w", err)
             }
+
+            coreDevAddr, err := cmd.Flags().GetString(flagCoreDevAddr)
+			if err != nil {
+				return fmt.Errorf("failed to get core dev address: %w", err)
+			}
+
+            daoAddr, err := cmd.Flags().GetString(flagDaoAddr)
+			if err != nil {
+				return fmt.Errorf("failed to get game dev address: %w", err)
+			}
 
             // get genesis params
 			genesisParams := getMainnetGenesisParams()
@@ -141,7 +156,7 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
 
             fmt.Printf("Preparing genesis file. got %d claim records and %d claim-eth records\n", len(claimRecords), len(claimEthRecords))
 
-            appState, genDoc, err = prepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID, claimEthRecords, claimRecords)
+            appState, genDoc, err = prepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID, claimEthRecords, claimRecords, coreDevAddr, daoAddr)
 
             if err != nil {
                 return fmt.Errorf("failed to prepare genesis: %w", err)
@@ -166,6 +181,8 @@ func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.C
 
     cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
     flags.AddQueryFlagsToCmd(cmd)
+    cmd.Flags().String(flagDaoAddr, "", "DAO alloc address")
+	cmd.Flags().String(flagCoreDevAddr, "", "Core Dev alloc address")
 
     return cmd
 }
@@ -178,6 +195,8 @@ func prepareGenesis(
     chainID string,
     claimEthRecords []claimtypes.ClaimEthRecord,
     claimRecords []claimtypes.ClaimRecord,
+    coreDevAddr string,
+    daoAddr string,
 ) (map[string]json.RawMessage, *tmtypes.GenesisDoc, error) {
     cdc := clientCtx.Codec
 
@@ -285,7 +304,23 @@ func prepareGenesis(
 
     // alloc module genesis
 	allocGenState := alloctypes.GetGenesisStateFromAppState(cdc, appState)
-	allocGenState.Params = genesisParams.AllocParams
+
+    // alloc
+    coreDev := alloctypes.WeightedAddress{
+        Address: coreDevAddr,
+        Weight:  sdk.NewDecWithPrec(25, 2),
+    }
+
+    dao := alloctypes.WeightedAddress{
+        Address: daoAddr,
+        Weight:  sdk.NewDecWithPrec(40, 2),
+    }
+
+	allocGenState.Params = alloctypes.DefaultParams()
+    allocGenState.Params.DistributionProportions = alloctypes.DistributionProportions{
+        CoreDev:    coreDev, // 25%
+        Dao:        dao, //40% 
+    }
 	allocGenStateBz, err := cdc.MarshalJSON(allocGenState)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to marshal alloc genesis state: %w", err)
@@ -373,22 +408,7 @@ func getTestnetGenesisParams() GenesisParams {
         ClaimDenom:         genParams.NativeCoinMetadatas[0].Base,
     }
 
-    // alloc
-    coreDev := alloctypes.WeightedAddress{
-        Address: "clan1cyk5jz84kmrqle6p0px0fdzu57jfyy5x4p697r",
-        Weight:  sdk.NewDecWithPrec(25, 2),
-    }
 
-    dao := alloctypes.WeightedAddress{
-        Address: "clan10q4cddypjcq5lr4j3dznt0e5krghrpcjzn94xz",
-        Weight:  sdk.NewDecWithPrec(40, 2),
-    }
-
-	genParams.AllocParams = alloctypes.DefaultParams()
-	genParams.AllocParams.DistributionProportions = alloctypes.DistributionProportions{
-		CoreDev:    coreDev, // 25%
-		Dao:        dao, //40% 
-	}
 
     // mint
 	genParams.MintParams = minttypes.DefaultParams()
