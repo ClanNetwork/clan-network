@@ -18,6 +18,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -334,6 +335,16 @@ func prepareGenesis(
 	}
 	appState[minttypes.ModuleName] = mintGenStateBz
 
+    
+    // crisis module genesis
+	crisisGenState := crisistypes.DefaultGenesisState()
+	crisisGenState.ConstantFee = genesisParams.CrisisConstantFee
+	crisisGenStateBz, err := cdc.MarshalJSON(crisisGenState)
+	if err != nil {
+        return nil, nil, fmt.Errorf("failed to marshal crisis genesis state: %w", err)
+	}
+	appState[crisistypes.ModuleName] = crisisGenStateBz
+
     return appState, genDoc, nil
 }
 
@@ -377,6 +388,11 @@ func getMainnetGenesisParams() GenesisParams {
     genParams.SlashingParams.DowntimeJailDuration = time.Minute                      // 1 minute jail period
     genParams.SlashingParams.SlashFractionDoubleSign = sdk.MustNewDecFromStr("0.05") // 5% double sign slashing
     genParams.SlashingParams.SlashFractionDowntime = sdk.MustNewDecFromStr("0.0001") // 0.0
+
+    genParams.CrisisConstantFee = sdk.NewCoin(
+		genParams.NativeCoinMetadatas[0].Base,
+		sdk.NewInt(100_000_000_000),
+	)
 
     return genParams
 }
